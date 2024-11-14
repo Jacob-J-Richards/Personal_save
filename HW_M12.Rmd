@@ -220,13 +220,14 @@ ggplot(data=college_rankings,aes(x=Enrollment,group=Type,fill=Type)) + geom_dens
 
 d.  Any single variables of interest.
 ```{r}
-college_rankings <- college_rankings[order(-college_rankings$Rank),]
-ggplot(data=college_rankings,aes(x=Rank,y=Tuition.in.state)) + geom_point() + geom_smooth() + labs(title = "In state tuition by university rank (increasing)")
+college_rankings$Rank <- as.numeric(college_rankings$Rank)
+college_rankings <- college_rankings[order(college_rankings[,1],decreasing = TRUE),]
+ggplot(data=college_rankings,aes(x=Rank,y=Tuition.in.state)) + geom_point() + geom_smooth() + 
+  labs(title = "In state tuition by university rank (increasing)")
 ```
 
 e.  Any other interesting plots you may find.
 ```{r}
-college_rankings <- college_rankings[order(-college_rankings$Rank),]
 ggplot(data=college_rankings,aes(x=Rank,y=Freshman.retention.rate)) + geom_point() + geom_smooth() + 
   labs(title = "freshaman retention rate by rank (increasing)")
 ```
