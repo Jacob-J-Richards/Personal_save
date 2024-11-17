@@ -1,0 +1,1230 @@
+---
+title: "Untitled"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-11-10"
+editor_options: 
+  markdown: 
+    wrap: 125
+---
+
+# Module 7
+
+-   Data points (x,y) are naturally paired samples as x and y come from the same observation
+
+## Pearson Correlation Coefficient
+
+### Proc corr - options
+
+will produce matrix of pearson corr coef's with pvalue directly beneath it, all var variables will be the rows and columns so
+the main diagonal will be all 1's.
+
+```{r,eval=FALSE}
+PROC CORR DATA= fitness NOSIMPLE;  #change to PROC CORR DATA= fitness NOSIMPLE; to only get corr coef and p-value or replace "NOSIMPLE" with RANK
+    VAR Oxygen_Consumption Runtime; #2x2 matrix produced by only var variables inputted
+RUN;
+```
+
+### Proc corr - correlation coeffient matrix
+
+will produce matrix of cooraltion coeficients, rows = with, columns = vards, with output in order of rank corr coef largest
+to least
+
+```{r,eval=FALSE}
+PROC CORR DATA= fitness RANK;
+  VAR Runtime Age Weight Run_Pulse Rest_Pulse Maximum_Pulse Performance; # 1x7 corr coef matrix will also print simple statistics
+  WITH Oxygen_Consumption;
+RUN;
+
+PROC CORR DATA= fitness NOSIMPLE;
+  VAR Runtime Age Weight Run_Pulse Rest_Pulse Maximum_Pulse Performance; # 7x7 corr coef matrix, no statistics, only corr coef and p-values 
+RUN;
+```
+
+### Pearson product-moment and Spearman rank-order correlation
+
+```{r,eval=FALSE}
+DATA spearcc;
+  INPUT X Y XRank YRank;
+  DATALINES;
+   1  1  1 1
+   3  2  2 2
+   7  3  3 3
+   9  6  4 4
+  11  8  5 5
+;
+RUN;
+PROC CORR DATA=spearcc 
+PEARSON /*Requests Pearson product-moment correlation  */
+SPEARMAN /*Requests Spearman rank-order correlation */    NOSIMPLE 
+NOPROB /*Suppresses p-values */; 
+RUN;
+```
+
+### partial cooralation option
+
+```{r,eval=FALSE}
+PROC CORR DATA=fitness;
+  VAR Oxygen_Consumption Runtime Run_Pulse Rest_Pulse Maximum_Pulse Age Weight; 
+  PARTIAL Performance; #*The PARTIAL statement lists variables to use in the calculation of partial correlation statistics.*/
+RUN;        
+```
+
+output: the p-values are testing H0: population corr coef = 0
+
+```{r,eval=FALSE}
+Pearson Correlation Coefficients, N = 31
+                        Prob > |r| under H0: Rho=0
+Oxygen_Consumption   Performance        Runtime      Rest_Pulse
+                         0.86377       -0.86219        -0.39935
+
+         PVALUE          <.0001         <.0001          0.0260
+
+Oxygen_Consumption     Run_Pulse          Age     Maximum_Pulse
+                        -0.39808       -0.31162        -0.23677
+        PVALUE           0.0266         0.0879          0.1997
+
+Oxygen_Consumption        Weight
+                        -0.16289
+            PVALUE       0.3813
+
+```
+
+```{r,eval=FALSE}
+± 1.00 	Perfect Correlation
+± 0.80 	Strong Correlation
+± 0.50 	Moderate Correlation
+± 0.20 	Weak Correlation
+± 0.00 	No Correlation
+```
+
+### R-square - aka coef of determination
+
+is just the (pearson correlation coef)\^2 variables corresponding to signifigant R\^2 p-values have a significant linear
+correlation between each other.
+
+## Regression
+
+### conditions of regression analysis validity
+
+assumptions for regression model
+
+```{r,eval=FALSE}
+The errors have a mean of 0 at each value of the independent variable.
+The errors have the same variance at each value of the independent variable.
+The errors are independent.
+The errors are normally distributed (for confidence intervals and tests).
+```
+
+Plots to verify assumptions: Residuals vs. Predicted (predicted responce variable by the model) Residuals vs. (Observed
+Values of the Independent Variable, used to produce model) Studentized Residuals vs. (Observed Values of the Independent
+Variable) (OBS) Residual by QQ plot
+
+```{r,eval=FALSE}
+GOPTIONS RESET=ALL;
+PROC REG DATA= fitness;
+MODEL Oxygen_Consumption=Performance;
+ PLOT R.*(P. Performance); #R. will plot residual for *(P. Performance) [the P. is response estimate from the model, and Performance is actual predictor variable]
+PLOT STUDENT.*OBS. / #(STUDENT. will divide residuals by standard errors and *OBS. is what it will be plotted by as number of observations
+VREF=3 2 -2 -3 #refrence lines for studentized residuals
+VAXIS=-4 TO 4 BY 1 #upper and lower bounds of studnized residual plot 
+HAXIS=0 TO 32 BY 1; # left and right bounds of the studentized residual plot 
+PLOT RESIDUAL.* NQQ.; # residual by qq plot 
+SYMBOL V=DOT;
+TITLE "Plots Of Diagnostic Statistics";
+RUN;
+QUIT;
+```
+
+Plot of residuals vs. predicted values of Oxygen_Consumption (dependent variable)
+
+-   randomly scattered about the reference line at 0
+-   no apparent trends or patterns
+-   check
+
+Plot of residuals vs. observed values of Performance (independent variable)
+
+Since residuals scatter around 0, we can verify the assumption:
+
+-   Have a mean of 0 at each value of the independent variable.
+-   Because of no apparent trends or patterns in the residuals, we can verify the assumption:
+-   Have the same variance at each value of the independent variable.
+-   check
+
+Studentized Residuals vs. actual predictor values given to produce regression line
+
+-   produce studentship residuals vs observation number
+-   no unusually large residuals -\> check
+-   produce residuals vs normal quantiles
+-   straight qq line --\> normal -\> check
+
+### Proc Reg - with fitted model
+
+don't forget to check the signifgance levels of intercept and coef of regression model
+
+```{r,eval=FALSE}
+GOPTIONS RESET=ALL FTEXT='ARIAL/BO' GUNIT=PCT HTEXT=3;
+#The PROC REG statement is used when you want to fit a model to the data, you must also use a MODEL statement;
+PROC REG DATA=fitness;  
+  MODEL Oxygen_Consumption = Performance/ CLB ALPHA=0.01;
+#MODEL dependent variable(s)= independent-variables/ options;
+#CLB: computes 100(1-a) % confidence limits for the parameter estimates;
+#ALPHA= option sets significance value for confidence and prediction intervals and tests;
+  PLOT Oxygen_Consumption*Performance;
+#The PLOT statement in PROC REG displays scatter plots with y variable on the vertical axis, x variable on the horizontal axis, and the regression line;
+  SYMBOL V=DOT H=1.5 CV=RED W=2 CI=BLACK ;
+RUN;
+QUIT;
+```
+
+### Proc Reg - Need Predictions with confidence interval
+
+```{r,eval=FALSE}
+proc import datafile="/home/u63989204/Module 7/Module 7 Labs/muscle.txt"
+dbms=dlm
+out = work.muscle_and_age replace;
+getnames=yes;
+option validvarname=v7;
+run;
+
+proc contents data=work.muscle_and_age;
+run;
+
+data muscle;
+set work.muscle_and_age;
+run;
+
+DATA NEEDEDPREDICTIONS;
+INPUT AGE @@;
+DATALINES;
+66 40
+;
+
+RUN;
+DATA PREDICT;
+SET MUSCLE NEEDEDPREDICTIONS;
+RUN;
+PROC REG DATA=PREDICT;
+MODEL MASS=AGE / P CLM ALPHA=0.02;
+RUN;
+```
+
+### Proc Reg - compairing goodness of fit for transformed variable linear model
+
+```{r,eval=FALSE}
+data dose_response;
+input dose systolic diastolic;
+log_dose = LOG(dose);
+datalines;
+4 180 110
+4 190 108
+4 178 100
+8 170 100
+8 180 98
+8 168 88
+16 160 80
+16 172 86
+16 170 86
+32 140 80
+32 130 72
+32 128 70
+;
+
+PROC REG DATA = dose_response;
+    MODEL systolic = log_dose;
+    plot systolic*log_dose;
+    MODEL diastolic = log_dose;
+    plot diastolic*log_dose;
+RUN;
+
+PROC REG DATA=dose_response;
+   MODEL systolic = log_dose;  #replace with MODEL systolic = log_dose / NOPRINT; if only want the plot
+   PLOT RESIDUAL.*log_dose; 
+   MODEL diastolic = log_dose;
+   PLOT RESIDUAL.*log_dose; 
+RUN;
+```
+
+in examination of the adjusted r-square, the non transformed predictor variable was better for Systolic blood pressure and
+the natural logarithim LOG() was better for Diastolic blood pressure
+
+# Module 9
+
+## base functions
+
+```{r,eval=FALSE}
+my_seq3 <- rep(2, times = 10)   # repeats 2, 10 times
+my_seq3
+##  [1] 2 2 2 2 2 2 2 2 2 2
+
+
+my_seq7 <- rep(c(3, 1, 10, 7), each = 3) # repeats each 
+                                         # element of the 
+                                         # series 3 times
+my_seq7
+##  [1]  3  3  3  1  1  1 10 10 10  7  7  7
+
+
+#match - finds the location of the arguments of the first input in the second input
+# Define two vectors
+x <- c("a", "b", "c", "d")
+table <- c("c", "a", "b", "e")
+
+# Match positions of elements of x in table
+match(x, table)
+# Output: [1] 2 3 1 NA
+
+
+
+
+# Define a vector
+x <- c(1, 2, 3, 4)
+
+cumsum(x)
+# Output: [1]  1  3  6 10
+
+cumprod(x)
+# Output: [1]  1  2  6 24
+
+```
+
+# Module 10
+
+## reading in data
+
+```{r,eval=FALSE}
+setwd("C:/Users/jake pc/Desktop/test_file") #file path 
+flowers <- read.table(file = 'flower(1).txt', header = TRUE, sep = "\t", stringsAsFactors = TRUE) #only needs file name
+```
+
+additional function arguments
+
+```{r,eval=FALSE}
+dec = "," #if you're in europe 
+na.strings = "*" #if they represent an empty element by somehing other than NA
+sep = "\t" #tab delimeted 
+sep = "," # for csv 
+```
+
+```{r,eval=FALSE}
+library(readr)
+# import white space delimited files
+all_data <- read_table(file = 'data/flower.txt', col_names = TRUE)
+
+# import comma delimited files
+all_data <- read_csv(file = 'data/flower.txt')
+
+# import tab delimited files
+all_data <- read_delim(file = 'data/flower.txt', delim = "\t")
+
+# or use
+all_data <- read_tsv(file = 'data/flower.txt')
+```
+
+## indexing data frames
+
+```{r,eval=FALSE}
+flowers[-(1:85), -c(4, 7, 8)]
+##    treat nitrogen block weight leafarea
+## 86 notip      low     1   6.01     17.6
+## 87 notip      low     1   9.93     12.0
+## 88 notip      low     1   7.03      7.9
+## 89 notip      low     2   9.10     14.5
+## 90 notip      low     2   9.05      9.6
+## 91 notip      low     2   8.10     10.5
+## 92 notip      low     2   7.45     14.1
+## 93 notip      low     2   9.19     12.4
+## 94 notip      low     2   8.92     11.6
+## 95 notip      low     2   8.44     13.5
+## 96 notip      low     2  10.60     16.2
+```
+
+difference between %in% and == operators
+
+```{r,eval=FALSE}
+> x <- c('a','b','c')
+> y <- c('c', 'b', 'a')
+> x == y
+[1] FALSE  TRUE FALSE
+
+> x %in% y
+[1] TRUE TRUE TRUE
+
+> x %in% letters
+[1] TRUE TRUE TRUE
+
+> letters %in% x
+ [1]  TRUE  TRUE  TRUE FALSE FALSE FALSE
+ [7] FALSE FALSE FALSE FALSE FALSE FALSE
+[13] FALSE FALSE FALSE FALSE FALSE FALSE
+[19] FALSE FALSE FALSE FALSE FALSE FALSE
+[25] FALSE FALSE
+```
+
+subset function
+
+```{r,eval=FALSE}
+setwd("C:/Users/jake pc/Desktop/module 10 - tutorials")
+flowers <- read.csv("flower(1).csv")
+
+tipplants <- subset(flowers, treat == "tip" & nitrogen == "medium" & block == 2, 
+                    select = c("treat", "nitrogen", "leafarea"))
+#select to chose which variables of the satisfying rows to extract
+tipplants
+
+tip_med_2 <- subset(flowers, treat == "tip" & nitrogen == "medium" & block == 2)
+tip_med_2
+
+```
+
+## ordering data frames
+
+the rows of the data frame will be ordered such that both conditions are satisfied
+
+```{r,eval=FALSE}
+block_height_ord <- flowers[order(flowers$block, flowers$height), ]        
+block_height_ord
+```
+
+same thing but reverse the desired order for one of the variables
+
+```{r,eval=FALSE}
+block_revheight_ord <- flowers[order(flowers$block, -flowers$height), ]        
+block_revheight_ord
+```
+
+reverse the order of a factor column - now the df has been ordered by least to greatest of height and reverse alphebetical
+order of nitrogren, mutually satisfied
+
+```{r,eval=FALSE}
+block_revheight_ord <- flowers[order(-xtfrm(flowers$nitrogen), flowers$height), ]        
+block_revheight_ord
+```
+
+## factor - order
+
+this will print the data frame rows ordered by low medium high of nitrogen
+
+```{r,eval=FALSE}
+flowers$nitrogen <- factor(flowers$nitrogen, 
+                           levels = c("low", "medium", "high"))    
+nit_ord <- flowers[order(flowers$nitrogen),]
+nit_ord
+```
+
+## merging data frames
+
+if two data frames have at leat one variable in common you can just merge them the merged data set will only contain
+observations which have a value for the common variable.
+
+```{r,eval=FALSE}
+taxa <- data.frame(GENUS = c("Patella", "Littorina", "Halichondria", "Semibalanus"),
+         species = c("vulgata", "littoria", "panacea", "balanoides"),
+         family = c("patellidae", "Littorinidae", "Halichondriidae", "Archaeobalanidae"))
+
+
+zone <- data.frame(genus = c("Laminaria", "Halichondria", "Xanthoria", "Littorina", 
+                             "Semibalanus", "Fucus"),
+                   species = c("digitata", "panacea", "parietina", "littoria", 
+                               "balanoides", "serratus"),
+                   zone = c( "v_low", "low", "v_high", "low_mid", "high", "low_mid"))
+
+
+taxa_zone <- merge(x = taxa, y = zone)
+taxa_zone
+```
+
+If we want even the rows without any common variable entry, then we use option
+
+```{r,eval=FALSE}
+taxa_zone <- merge(x = taxa, y = zone, all = TRUE)
+taxa_zone
+#the missing value will just be NA
+```
+
+if we want to merge data frames by a variable but the variable names in each are different then we
+
+```{r,eval=FALSE}
+taxa_zone <- merge(x = taxa, y = zone, by.x = "GENUS", by.y = "genus", all = TRUE)
+taxa_zone
+```
+
+or multiple variable names
+
+```{r,eval=FALSE}
+taxa_zone <- merge(x = taxa, y = zone, by.x = c("species", "GENUS"), 
+                    by.y = c("species", "genus"), all = TRUE)
+```
+
+### reshaping data frames
+
+melt() for wide to long df formats
+
+```{r,eval=FALSE}
+library(reshape2)
+wide_data <- read.csv(file="wide_format_example.csv",header=TRUE)
+wide_data
+
+long_data <- melt(data = wide_data, id.vars = c("StudentID", "Name"),
+                   measured.vars = c("Math_Score", "English_Score", "Science_Score"),
+                   variable.name = "Subject", value.name = "Scores")
+```
+
+dcast() for long to wide formatting
+
+```{r,eval=FALSE}
+# StudentID + Name ~ Subject, value.var = "Scores"
+#columns which will remain unchanged ~ column_of_categories, value.var = "value of those categories when it was wide"
+back_to_wide <- dcast(data = long_data, StudentID + Name ~ Subject, value.var = "Scores")
+back_to_wide
+```
+
+### table function
+
+will give you the counts of whatever inputted stratification categories , factors and numeric
+
+```{r,eval=FALSE}
+flowers <- read.csv(file="flowers.csv",header=TRUE)
+table(flowers$nitrogen, flowers$treat)
+```
+
+### xtabs - ftable - tapply
+
+```{r,eval=FALSE}
+# the right side of the ~ is all variables we would like to stratify and produce counts for 
+xtabs(~ nitrogen + treat + block, data = flowers)
+# will take care of data if not already factored 
+
+ftable(xtabs(~ nitrogen + treat + block, data = flowers))
+
+#evaluate the mean height of each category of nitrogen 
+tapply(flowers$height, flowers$nitrogen, mean)
+#the third argument is any function you would like, first is what it will be applied on, and second is the categories of division of the first variable 
+
+tapply(flowers$height, flowers$nitrogen, sd)
+
+# if there are NA's in the data and want to remove them 
+tapply(flowers$height, flowers$nitrogen, summary, na.rm=TRUE)
+
+# you can even pass lists of categories to stratify the variables to be evaluated by the function
+tapply(flowers$height, list(flowers$nitrogen,flowers$treat), summary, na.rm=TRUE)
+```
+
+### aggregate
+
+```{r,eval=FALSE}
+#input variables for function - stratification categories - function to apply 
+aggregate(flowers[, 4:7], by = list(nitrogen = flowers$nitrogen, treat = flowers$treat), FUN = mean)
+
+# after formatting the dates column to be only year char you can do the rest of the problem in a single line 
+means_by_year <- aggregate(mat[,2:23],by=list(year=mat[,1]),FUN=mean)
+
+# and if we want to apply the previous to a subset we can do this 
+aggregate(height ~ nitrogen + treat, FUN = mean, subset = flowers < 7, data = flowers)
+
+aggregate(height ~ nitrogen + treat, FUN = mean, subset = block == "1", data = flowers)
+
+```
+
+# Module 11
+
+## base plot function
+
+```{r,eval=FALSE}
+setwd("C:/Users/jake pc/Desktop/stat 405 MIDTERM 2")
+flowers <- read.csv(file="flowers.csv",header=TRUE)
+
+
+#scatterplot by index
+plot(flowers$weight)
+
+#specify the data frame, then don't have to do so in the function call 
+with(flowers, plot(weight)) 
+
+#different plot types 
+my_x <- 1:10
+my_y <- seq(from = 1, to = 20, by = 2)
+par(mfrow = c(2, 2))
+plot(my_x, my_y, type = "l") 
+plot(my_x, my_y, type = "b")
+plot(my_x, my_y, type = "o")
+plot(my_x, my_y, type = "c")
+
+```
+
+## base histogram function
+
+```{r,eval=FALSE}
+hist(flowers$height)
+
+max(flowers$height)
+#if we want to set custom intervals for each frequency bars (more or less detailed)
+max(flowers$height) #round up last point from the max 
+intervals <- seq(0,18,1)
+hist(flowers$height, breaks = intervals, main = "petunia height")
+
+#proportion instead of frequency
+hist(flowers$height, breaks = intervals, main = "petunia height",freq = FALSE)
+
+#add a pdf approximation curve (density curve)
+hist(flowers$height, breaks = intervals, main = "petunia height",freq = FALSE)
+lines(density(flowers$height))
+```
+
+## boxplots (box and whiskers)
+
+```{r,eval=FALSE}
+boxplot(flowers$weight, ylab = "Weight")
+#the thick black line in the middle is the median 
+#upper 15 is the upper quartile (75% of data is less than 15)
+#around 10 is the lower quartile (25% of the date is less than 10)
+#the grey area of the box is the inter quartile range 
+#the very upper line is the whiskers and points beyond that are potential unusual observations 
+```
+
+## box and whiskers stratified
+
+```{r,eval=FALSE}
+        #distribution of weight by levels of nitrogen, data = dataframe
+boxplot(weight ~ nitrogen, data = flowers, ylab = "weight (g)", xlab = "nitrogen level")
+#levels are stored in df as high,low,medium so that's the order in which the plots are printed
+
+#change the order of the levels to this 
+flowers$nitrogen <- factor(flowers$nitrogen, levels = c("low", "medium", "high"))
+boxplot(weight ~ nitrogen, data = flowers, ylab = "weight (g)", xlab = "nitrogen level")
+#and that's how they print now 
+
+#we can also do combinations of stratification variables 
+boxplot(weight ~ nitrogen * treat, data = flowers, 
+         ylab = "weight (g)", xlab = "nitrogen level")
+
+#reduce the font size of the group labels so they all fix on the x-axis 
+boxplot(weight ~ nitrogen * treat, data = flowers, 
+         ylab = "weight (g)", xlab = "nitrogen level", 
+         cex.axis = 0.7)
+```
+
+## violin plots
+
+```{r,eval=FALSE}
+library(vioplot)
+#weight stratified by levels of nitrogen
+vioplot(weight ~ nitrogen, data = flowers, ylab = "weight (g)", xlab = "nitrogen level", col = "lightblue")
+#the white circle is the median value 
+```
+
+## dotcharts
+
+```{r,eval=FALSE}
+#on the x-axis is values of height, the y-axis is order that those values are in data frame 
+#(bottom is beginning of data frame, top is end of data frame)
+dotchart(flowers$height)
+```
+
+## dotcharts stratified
+
+```{r}
+dotchart(flowers$height, groups = flowers$nitrogen)
+```
+
+## pairs plots (correlation matrix)
+
+```{r}
+pairs(flowers[, c("height", "weight", "leafarea", "shootarea", "flowers")],panel = panel.smooth)
+#pairs(flowers[, 4:8]) #equivalently
+#kernel smoother panel option which is the red line 
+```
+
+Variable in the row is the y-axis variable and variable in the column is the x-axis
+
+## pairs options, correlation, histogram, smooth
+
+```{r}
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
+{
+    usr <- par("usr")
+    par(usr = c(0, 1, 0, 1))
+    r <- abs(cor(x, y))
+    txt <- format(c(r, 0.123456789), digits = digits)[1]
+    txt <- paste0(prefix, txt)
+    if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+    text(0.5, 0.5, txt, cex = cex.cor * r)
+}
+pairs(flowers[, c("height", "weight", "leafarea", "shootarea", "flowers")],panel = panel.cor)
+
+# or if we only want either the upper or lower diagonal to be corr coef's 
+
+
+pairs(flowers[, c("height", "weight", "leafarea", "shootarea", "flowers")],lower.panel = panel.cor)
+# or upper.panel
+
+panel.hist <- function(x, ...)
+{
+    usr <- par("usr")
+    par(usr = c(usr[1:2], 0, 1.5) )
+    h <- hist(x, plot = FALSE)
+    breaks <- h$breaks; nB <- length(breaks)
+    y <- h$counts; y <- y/max(y)
+    rect(breaks[-nB], 0, breaks[-1], y, col = "cyan", ...)
+}
+
+
+# upper, lower, diagonal
+pairs(flowers[, c("height", "weight", "leafarea", 
+                "shootarea", "flowers")], 
+                 lower.panel = panel.cor,
+                 diag.panel = panel.hist,
+                 upper.panel = panel.smooth)
+```
+
+## coplots
+
+```{r}
+#flowers as a function of weight, examined at different intervals of leaf area (stratify by quantatative)
+coplot(flowers ~ weight|leafarea, data = flowers)
+#panels from bottom left to top right correspond to bars of equivalent potion in the leaf area interval box 
+
+#if you don't want any of the panels to overlap 
+coplot(flowers ~ weight|leafarea, data = flowers, overlap = 0)
+
+# can also condition by categorical variables 
+coplot(flowers ~ weight|nitrogen, data = flowers)
+
+# and even all combinations of more than 1 either categorical or numeric variables 
+coplot(flowers ~ weight|nitrogen * treat, data = flowers)
+
+```
+
+## coplot with options
+
+```{r}
+coplot(flowers ~ weight|nitrogen * treat, data = flowers,
+        panel = function(x, y, ...) {
+        points(x, y, ...)
+        abline(lm(y ~ x), col = "blue")})
+```
+
+## latice
+
+```{r}
+#everything in lattice uses response ~ predictor notation
+library(lattice)
+#histogram
+histogram(~ height, type = "count", data = flowers)
+
+#box plot (box and whiskers)
+#weight stratified by nitrogen level
+bwplot(weight ~ nitrogen, data = flowers)
+
+#                lattice.                    R.  
+#scatterplot    xyplot()	                  plot()
+#frequency      histogram(type = "count")	hist()
+#boxplot	       bwplot()	                  boxplot()
+#Cleveland     dotplot	dotplot()	          dotchart()
+#scatterplot   matrix	splom()	            pairs()
+#conditioning  plot	xyplot(y ~ x | z)	    coplot()
+```
+
+## latice plots in multiple panels, layout options
+
+```{r}
+#height conditional on nitrogen level’. 
+histogram(~ height | nitrogen, type = "count", data = flowers)
+
+#layout = columns by rows 
+histogram(~ height | nitrogen, type = "count", layout = c(1, 3), data = flowers)
+
+#factor within the plot function call 
+#will not change the values in the data frame 
+bwplot(weight ~ nitrogen | factor(block), data = flowers)
+
+#multiple categories of stratification
+xyplot(height ~ weight | nitrogen * treat, data = flowers)
+
+#stratify by multiple categories and display by another category 
+xyplot(flowers ~ shootarea | nitrogen * treat, 
+        groups = block, auto.key = TRUE, data = flowers)
+
+```
+
+## base r plot customization
+
+```{r}
+#margins par(mar = c(bottom, left, top, right)
+par(mar = c(4.1, 4.4, 4.1, 1.9), xaxs = "i", yaxs = "i") #makes the axis better 
+plot(flowers$weight, flowers$shootarea, 
+       xlab = "weight (g)",
+       ylab = expression(paste("shoot area (cm"^"2",")")), #superscript in the y label 
+       xlim = c(0, 30), ylim = c(0, 200), bty = "l", # x-lim and y-lim # gets rid of box that surrounds entire plot 
+       las = 1, cex.axis = 0.8, tcl = -0.2, #makes y axis labels horizontal, makes them smaller, make tic marks shorter
+       pch = 16, col = "dodgerblue1", cex = 0.9) #plotting symbol used, color, and size of it 
+text(x = 28, y = 190, label = "A", cex = 2) #coordiates of text, the text, and size of the text 
+par(mar = c(4.1, 4.4, 4.1, 1.9), xaxs="i", yaxs="i")
+points(x = flowers$weight[flowers$nitrogen == "low"],
+       y = flowers$shootarea[flowers$nitrogen == "low"],
+       pch = 16, col = "deepskyblue")
+points(x = flowers$weight[flowers$nitrogen == "medium"],
+       y = flowers$shootarea[flowers$nitrogen == "medium"],
+       pch = 16, col = "yellowgreen")
+points(x = flowers$weight[flowers$nitrogen == "high"],
+       y = flowers$shootarea[flowers$nitrogen == "high"],
+       pch = 16, col = "deeppink3")
+text(x = 28, y = 190, label = "A", cex = 2)
+leg_cols <- c("deepskyblue", "yellowgreen", "deeppink3")
+leg_sym <- c(16, 16, 16)
+leg_lab <- c("low", "medium", "high")
+
+legend(x = 1, y = 200, col = leg_cols, pch = leg_sym, 
+        legend = leg_lab, bty = "n", 
+        title = "Nitrogen level")
+```
+
+## base R multiple plots
+
+```{r}
+#one row two columns 
+par(mfrow = c(1, 2))
+#then both plot functions separately 
+plot(flowers$weight, flowers$shootarea, xlab = "weight",ylab = "shoot area")
+boxplot(shootarea ~ nitrogen, data = flowers, cex.axis = 0.6)
+par(mfrow = c(1,1))
+
+#likewise 2rows 2 columns but we then need to call 4 separate plots 
+par(mfrow = c(2, 2))
+plot(flowers$weight, flowers$shootarea, xlab = "weight",
+      ylab = "shoot area")
+boxplot(shootarea ~ nitrogen, cex.axis = 0.8, data = flowers)
+hist(flowers$weight, main ="")
+dotchart(flowers$weight)
+par(mfrow = c(1,1)) # reset after plot 
+```
+
+## base R layout for multiple plots customized
+
+```{r}
+layout_mat <- matrix(c(2, 0, 1, 3), nrow = 2, ncol = 2,byrow = TRUE)
+layout_mat
+#2x2 panels with the second plot 
+#first plot in lower left 
+#second plot in upper left 
+#third plot in bottom right and the top right panel is empty 
+
+#not we can change the aspect ratio of 
+my_lay <- layout(mat = layout_mat, 
+                 heights = c(1, 3), 
+                 widths = c(3, 1), respect =TRUE) 
+layout.show(my_lay)
+
+par(mar = c(4, 4, 0, 0))
+plot(flowers$weight, flowers$shootarea, 
+     xlab = "weight (g)", ylab = "shoot area (cm2)")
+par(mar = c(0, 4, 0, 0))
+boxplot(flowers$weight, horizontal = TRUE, frame = FALSE,
+        axes =FALSE)
+par(mar = c(4, 0, 0, 0))
+boxplot(flowers$shootarea, frame = FALSE, axes = FALSE)
+```
+
+## exporting base plots
+
+```{r}
+pdf(file = "my_plot.pdf")
+plot(flowers$weight, flowers$shootarea)
+dev.off()
+
+png("my_plot.png")
+plot(flowers$weight, flowers$shootarea)
+dev.off()
+```
+
+# Module 12 - GGPLOT
+
+## general form
+
+```{r,eval=FALSE}
+diamonds
+ggplot(data = diamonds, aes(x = carat, y = price, color = color,shape=cut)) + geom_point() 
+
+
+# these are all the options for matting aesthetic properties to variables 
+    #variable =   position (e.g., x and y coordinates)
+    #color (outside color)
+    #fill (inside color)
+    #shape (of points; e.g., circle, triangle)
+    #linetype (e.g., solid line, dotted line)
+    #size
+    #alpha (transparency)
+
+```
+
+## scale customization
+
+simplify the addition of plot layers
+
+```{r,eval=FALSE}
+
+p1 <- ggplot(mpg, aes(displ, hwy)) + geom_point()
+
+p1  +  scale_x_continuous("Engine displacement (L)") + scale_y_continuous("Highway MPG") 
+
+p1 + labs(x = "Engine displacement (L)", y = "Highway MPG") 
+
+p1 + scale_x_continuous(limits = c(2, 6))
+
+p1 + xlim(2, 6) 
+
+p1 + scale_x_continuous(breaks = c(2, 4, 6))
+
+p1 + scale_x_continuous(breaks = c(2, 4, 6), label = c("two", "four", "six"))
+
+```
+
+## custom scales
+
+we're mapping dimension color to variable drv, and now we're setting what color we want each factor of drv to map too
+
+```{r,eval=FALSE}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color=drv)) + geom_point() + geom_smooth(method="lm") + 
+  labs(title ="MPG vs Engine size", x = "Engine size", y = "MPG") + 
+  scale_colour_manual(name = "Drive", values = c("lightpink", "darkseagreen", "lightblue"))
+```
+
+mapping the dimension color to continuous variable so the color will be a gradient
+
+```{r,eval=FALSE}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color=cty)) + geom_point() 
+```
+
+if we don't like the automatic color gradient, we can specify the one desired
+
+```{r,eval=FALSE}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color=cty)) + geom_point() + 
+  
+  scale_color_gradient(name = "City MPG", low = "red", high = "blue")
+```
+
+## statistical layers
+
+### histograms
+
+```{r,eval=FALSE}
+#remember histogram by default will calculate the count itself so you would pass the raw data for it to process
+
+ggplot(data = diamonds, aes(x = carat)) + geom_histogram(bins=100)
+
+ggplot(data = diamonds, aes(x = carat)) + geom_histogram(binwidth=0.001)
+
+
+#geom_histogram produces the following variables from inputed data
+
+    #count, the number of observations in each bin
+    #density, the density of observations in each bin (percentage of total/bar width)
+    #x, the center of the bin
+
+#to map these produced variables to aesthetic dimension surround the variable with ..var.. as such 
+
+ggplot(diamonds, aes(carat)) + geom_histogram(aes(y = ..density..), binwidth = 0.1) 
+
+```
+
+### bar plots
+
+```{r,eval=FALSE}
+mpg
+s <- ggplot(mpg, aes(fl, fill = drv)) #count of fl stratified by category of drv 
+
+s + geom_bar()
+
+s + geom_bar(position = "stack") # counts the total of fl levels, and just shows proportion of each stratification wihtin that totall 
+
+s + geom_bar(position = "dodge") #counts each stratification individually
+
+s + geom_bar(position = "fill") #purely demon straights the proportion of the statification categoires within fl
+```
+
+## box plot - violin plot - violin/box - Ridgeline - pie chart
+```{r}
+ggplot(data = iris, aes(x = Species, y = Petal.Length, fill = Species)) + 
+  geom_boxplot(position = "dodge") + 
+  labs(y = "Petal Length", title = "Box Plot") 
+
+ggplot(data = iris, aes(x = Species, y = Petal.Length, fill = Species)) + 
+  geom_violin(position = "dodge") + 
+  labs(y = "Petal Length", title = "Violin Plot")
+
+ggplot(data = iris, aes(x = Species, y = Petal.Length, fill = Species)) + 
+  geom_violin(trim = FALSE, position = "dodge") + 
+  geom_boxplot(width = 0.20, position = position_dodge(width = 20), fill = "orange") +
+  labs(y = "Petal Length", title = "Violin/Box") 
+
+library(ggridges)
+iris$Species <- factor(iris$Species,levels=c("setosa","versicolor","virginica"))
+ggplot(data = iris, aes(x = Petal.Length, y = Species, fill = Species)) + 
+  geom_hline(yintercept = c(1, 2, 3), color = "black", size = .6) +  
+  geom_density_ridges(scale = 1.75, rel_min_height = 0.01) + 
+  labs(x = "Petal Length",y="frequency", title = "Ridgeline Plot of Petal Length by Species") + 
+  theme_bw() + theme(plot.title = element_text(face = "bold", size = 12),
+  axis.title = element_text(vjust = 1, hjust = 1), 
+  legend.background = element_rect(fill = "white", linewidth = 2, colour = "white"),
+  panel.grid.minor = element_blank()) + expand_limits(y = c(0.5, 3.75))
+
+library(ggplot2)
+iris$Species <- factor(iris$Species,levels=c("versicolor","virginica","setosa"))
+species_counts <- as.data.frame(table(iris$Species))
+colnames(species_counts) <- c("Species", "Count")
+ggplot(species_counts, aes(x = "", y = -Count, fill = Species)) +  
+  geom_bar(stat = "identity", width = 1, color = "black") +  
+  coord_polar("y") + theme_void()
+```
+
+
+
+## faceting
+
+produce separate plot in the same panel specifying rows or columns to orient separate plots by category
+
+```{r,eval=FALSE}
+ggplot(data = diamonds, aes(x = carat)) + geom_histogram(bins=30) + facet_grid(rows = vars(color)) #another row for each color 
+
+ diamonds
+ggplot(data = diamonds, aes(x = carat)) + geom_histogram(bins=30) + facet_grid(cols = vars(color)) # another column for each color
+
+ggplot(data = diamonds, aes(x = carat)) + geom_histogram(bins=30) + facet_grid(rows = vars(cut),cols = vars(color)) #further stratification
+
+
+#OPTION SCALES = FREE will make the scales fit the data of all facets, and all facets will have the same scales 
+facet_grid(cols = vars(Species), scales="free")
+
+#FOR FACET GRID, SCALES = FREE will completely decouple the facets scales from each other and each scale will fit only that individual facet. 
+Oxboys
+#wrap will just make a new plot for each category and will wrap them like text to save space, it's just a list there isn't a dimensional
+#it automatically printed them in order of trend line least to greatest
+ggplot(Oxboys, aes(age, height)) + geom_line() + facet_wrap(vars(Subject))
+```
+
+## grouping
+
+where this is different is that this will not produce a separate plot for each group, instead, the geom object will be
+re-evaluated in the same graphic for each group specified.
+
+```{r,eval=FALSE}
+library(nlme)
+head(Oxboys,5)
+
+# boys heights by age, plotted for each individual boy, otherwise the lines would connect different boys heights 
+ggplot(Oxboys, aes(age, height, group = Subject)) + geom_line() 
+
+ggplot(Oxboys, aes(age, height, group = Subject)) + geom_smooth() 
+```
+
+## customization
+
+```{r}
+setwd("C:/Users/jake pc/Desktop/stat 405 MIDTERM 2")
+knitr::include_graphics("ggplot_element_syntax.png")
+![Caption for the image](ggplot_element_syntax.png)
+
+
+library(ggplot2)
+base <- ggplot(mpg, aes(cty, hwy, color = factor(cyl))) +
+  geom_jitter() + 
+  geom_abline(color = "grey50", linewidth = 2)
+
+base
+
+
+labelled <- base +
+  labs(x = "City mileage/gallon",
+       y = "Highway mileage/gallon",
+       color = "Cylinders",
+       title = "Highway and city mileage are highly correlated") +
+       scale_color_brewer(type = "seq", palette = "Spectral")
+
+labelled
+
+
+styled <- labelled +
+  theme_bw() + 
+  theme(plot.title = element_text(face = "bold", size = 12),
+    legend.background = element_rect(fill = "white", linewidth = 4, color = "white"),
+    legend.justification = c(0, 1),
+    legend.position = c(0, 1),
+    axis.ticks = element_line(color = "grey70", linewidth = 0.2),
+    panel.grid.major = element_line(color = "grey70", linewidth = 0.2),
+    panel.grid.minor = element_blank())
+
+styled
+
+```
+
+## pre-made themes
+
+```{r,eval=FALSE}
+theme_grey(): the signature ggplot2 theme with a light grey background and white gridlines.
+theme_bw(): a variation on theme_grey() that uses a white background and thin grey gridlines.
+theme_linedraw(): a theme with only black lines of various widths on white backgrounds, reminiscent of a line drawing.
+theme_light(): similar to theme_linedraw() but with light grey lines and axes, to direct more attention towards the data.
+theme_dark(): the dark cousin of theme_light(), with similar line sizes but a dark background. Useful to make thin colored lines pop out.
+theme_minimal(): a minimalistic theme with no background annotations.
+theme_classic(): a classic-looking theme, with x and y-axis lines and no gridlines.
+theme_void(): a completely empty theme.
+```
+
+## modifying theme components
+
+### element text
+
+```{r,eval=FALSE}
+base <- ggplot(flowers,aes(x=height,y=weight)) + geom_point()
+base_t <- base + labs(title = "This is a ggplot") + xlab(NULL) + ylab(NULL)
+
+
+base_t + theme(plot.title = element_text(size = 16))
+
+base_t + theme(plot.title = element_text(face = "bold", color = "red"))
+
+base_t + theme(plot.title = element_text(hjust = 1))
+
+base_t + theme(plot.title = element_text(margin = margin())) #reset margins as an example for when you need to modify them 
+
+base_t + theme(plot.title = element_text(margin = margin(t=10,b=10)))
+```
+
+12.3.3
+
+### element line
+```{r,eval=FALSE}
+setwd("/Users/jacobrichards/Desktop/Stat 405 Midterm 2")
+flowers <- read.csv(file="flowers.csv",header=TRUE)
+base <- ggplot(flowers,aes(x=height,y=weight)) + geom_point()
+
+base <- base + labs(title = "This is a ggplot") + xlab(NULL) + ylab(NULL)
+
+#make the background grid major lines black
+base + theme(panel.grid.major = element_line(color = "black"))
+
+#change the thickness of the background grid lines 
+base + theme(panel.grid.major = element_line(linewidth = 2))
+
+#make the major grin lines dotted 
+base + theme(panel.grid.major = element_line(linetype = "dotted"))
+
+```
+
+### element rect
+
+element_rect() draws rectangles, mostly used for backgrounds, parameterized by fill color and border color, size, and
+linetype.
+
+```{r,eval=FALSE}
+base + theme(plot.background = element_rect(fill = "grey80", color = NA))
+
+base + theme(plot.background = element_rect(color = "red", linewidth = 2))
+
+base + theme(panel.background = element_rect(fill = "linen"))
+```
+
+### element blank
+
+remove elements
+
+```{r,eval=FALSE}
+last_plot() + theme(panel.grid.minor = element_blank())
+#remove minor grid marks 
+```
+
+remove major grid marks
+```{r,eval=FALSE}
+last_plot() + theme(panel.grid.major = element_blank())
+ggsave("test.pdf")
+```
+
+remove the backround
+```{r,eval=FALSE}
+last_plot() + theme(panel.background = element_blank())
+```
+
+ggsave
+```{r,eval=FALSE}
+ggsave("test.pdf") #call underneath the plot command to save the last one 
+ggsave(filename, plot = last_plot(), device = NULL, path = NULL, scale = 1, width = NA, height = NA, units = c("in", "cm", "mm", "px"), dpi = 300, limitsize = TRUE, bg = NULL)
+```
+
+or just the standard base R graphic saving function
+```{r}
+pdf("output.pdf", width = 6, height = 6)
+ggplot(mpg, aes(displ, cty)) + geom_point()
+dev.off()
+```
+
+
+
+
+```{r}
+data(mpg)
+
+mpg
+
+ggplot(data=mpg,aes(x=displ,y=hwy)) + geom_point() + geom_smooth()
+
+ggplot(data=mpg,aes(x=displ,y=hwy,color=drv)) + geom_point() + geom_smooth(se=FALSE)
+
+ggplot(data=mpg,aes(x=displ,y=hwy)) + geom_point(data=mpg,aes(x=displ,y=hwy,color=drv)) + geom_smooth(se=FALSE)
+
+ggplot(data=mpg,aes(x=displ,y=hwy,color=drv,linetype=drv)) + geom_point() + geom_smooth(color="blue",se=FALSE) +
+  scale_linetype_manual(name = "Drive", values = c("solid", "dashed", "dashed"))
+
+```
+
+```{r}
+data(iris)
+iris
+ggplot(data=iris,aes(x=Petal.Length,y=Petal.Width,color=Species,shape=Species)) + geom_point()
+
+ggplot(data=iris,aes(x=Petal.Length,y=Petal.Width,color=Species,shape=Species)) + geom_point() + geom_smooth(method="lm")
+
+ggplot(data=iris,aes(x=Petal.Length,y=Petal.Width,color=Species,shape=Species)) + geom_point() + geom_smooth()
+
+ggplot(data=iris,aes(x=Petal.Length,y=Petal.Width,color=Species,shape=Species)) + geom_line()
+
+ggplot(data=iris,aes(x=Petal.Length,y=Petal.Width,color=Species,shape=Species)) + geom_point() + geom_smooth(method="lm") + 
+  facet_grid(cols = vars(Species), scales="free")
+
+
+ggplot(data=iris,aes(x=Petal.Length,y=Petal.Width,color=Species,shape=Species)) + geom_point() + 
+  geom_smooth(method = "loess") + facet_grid(cols = vars(Species), scales="free")
+
+
+ggplot(data=iris,aes(x=Petal.Length,y=Petal.Width,color=Species,shape=Species)) + geom_point() + 
+  geom_smooth(method = "loess") + facet_wrap(vars(Species), scales="free")
+
+```
+
+
+```{r}
+ggplot(data=iris,aes(Petal.Length,fill=Species)) + geom_histogram(binwidth = 0.20,position="stack",color="black")
+
+ggplot(data=iris,aes(x=Petal.Length)) + geom_histogram(aes(y=..density..),binwidth = 0.20,color="black",fill="red") + geom_density(fill="blue",alpha=0.20)
+
+ggplot(data=iris,aes(x=Petal.Length,fill=Species)) + geom_density(alpha=0.20)
+```
+
+```{r}
+setwd("/Users/jacobrichards/Desktop/Stat_405_R/Module 12")
+college_rankings <- read.csv(file="College_Rankings_2014.csv",header=TRUE)
+
+college_rankings
+
+ggplot(data=college_rankings,aes(State,fill=Type)) + geom_bar()
+
+
+ggplot(data=college_rankings,aes(Tuition.in.state,color=Rank,fill=Rank)) + geom_histogram() + facet_wrap(vars(Type),scales="free")
+  scale_color_gradient(name = "Rank", low = "red", high = "blue")
+
+```
+
+
+
+
+
