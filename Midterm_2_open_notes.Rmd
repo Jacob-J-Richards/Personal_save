@@ -117,9 +117,10 @@ The errors are independent.
 The errors are normally distributed (for confidence intervals and tests).
 ```
 
-Plots to verify assumptions: Residuals vs. Predicted (predicted responce variable by the model) Residuals vs. (Observed
-Values of the Independent Variable, used to produce model) Studentized Residuals vs. (Observed Values of the Independent
-Variable) (OBS) Residual by QQ plot
+Plots to verify assumptions: 
+Residuals vs. Predicted (predicted responce variable by the model) 
+Residuals vs. (Observed Values of the Independent Variable, used to produce model) 
+Studentized Residuals vs. (Observed Values of the IndependentVariable) (OBS) Residual by QQ plot
 
 ```{r,eval=FALSE}
 GOPTIONS RESET=ALL;
@@ -152,7 +153,7 @@ Since residuals scatter around 0, we can verify the assumption:
 -   Have the same variance at each value of the independent variable.
 -   check
 
-Studentized Residuals vs. actual predictor values given to produce regression line
+Studentized Residuals vs. actual predictor values given to produce regression line (observed values of Performance (independent variable))
 
 -   produce studentship residuals vs observation number
 -   no unusually large residuals -\> check
@@ -206,7 +207,9 @@ DATA PREDICT;
 SET MUSCLE NEEDEDPREDICTIONS;
 RUN;
 PROC REG DATA=PREDICT;
-MODEL MASS=AGE / P CLM ALPHA=0.02;
+MODEL MASS=AGE / P CLM ALPHA=0.02; 
+#muscle mass of a 40 year old, that means all of them, not just an individual, think about it. the mean interval would 
+#be tighter than the individual one 
 RUN;
 ```
 
@@ -944,6 +947,7 @@ s + geom_bar(position = "fill") #purely demon straights the proportion of the st
 ```
 
 ## box plot - violin plot - violin/box - Ridgeline - pie chart
+
 ```{r}
 ggplot(data = iris, aes(x = Species, y = Petal.Length, fill = Species)) + 
   geom_boxplot(position = "dodge") + 
@@ -977,8 +981,6 @@ ggplot(species_counts, aes(x = "", y = -Count, fill = Species)) +
   geom_bar(stat = "identity", width = 1, color = "black") +  
   coord_polar("y") + theme_void()
 ```
-
-
 
 ## faceting
 
@@ -1094,6 +1096,7 @@ base_t + theme(plot.title = element_text(margin = margin(t=10,b=10)))
 12.3.3
 
 ### element line
+
 ```{r,eval=FALSE}
 setwd("/Users/jacobrichards/Desktop/Stat 405 Midterm 2")
 flowers <- read.csv(file="flowers.csv",header=TRUE)
@@ -1135,31 +1138,32 @@ last_plot() + theme(panel.grid.minor = element_blank())
 ```
 
 remove major grid marks
+
 ```{r,eval=FALSE}
 last_plot() + theme(panel.grid.major = element_blank())
 ggsave("test.pdf")
 ```
 
 remove the backround
+
 ```{r,eval=FALSE}
 last_plot() + theme(panel.background = element_blank())
 ```
 
 ggsave
+
 ```{r,eval=FALSE}
 ggsave("test.pdf") #call underneath the plot command to save the last one 
 ggsave(filename, plot = last_plot(), device = NULL, path = NULL, scale = 1, width = NA, height = NA, units = c("in", "cm", "mm", "px"), dpi = 300, limitsize = TRUE, bg = NULL)
 ```
 
 or just the standard base R graphic saving function
+
 ```{r}
 pdf("output.pdf", width = 6, height = 6)
 ggplot(mpg, aes(displ, cty)) + geom_point()
 dev.off()
 ```
-
-
-
 
 ```{r}
 data(mpg)
@@ -1201,7 +1205,6 @@ ggplot(data=iris,aes(x=Petal.Length,y=Petal.Width,color=Species,shape=Species)) 
 
 ```
 
-
 ```{r}
 ggplot(data=iris,aes(Petal.Length,fill=Species)) + geom_histogram(binwidth = 0.20,position="stack",color="black")
 
@@ -1223,8 +1226,3 @@ ggplot(data=college_rankings,aes(Tuition.in.state,color=Rank,fill=Rank)) + geom_
   scale_color_gradient(name = "Rank", low = "red", high = "blue")
 
 ```
-
-
-
-
-
