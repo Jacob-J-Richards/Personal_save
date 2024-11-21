@@ -1,0 +1,23 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-11-21"
+---
+```{r}
+setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_13/Lab_13.2")
+```
+
+1.) (Use R) billboard is a data set in tidyr. This is an typical example of a longitudinal data in a wide
+form. Reshape the data set from wide to long.
+```{r}
+library(dplyr)
+library(tidyr)
+data(billboard)
+glimpse(billboard)
+```
+
+```{r}
+billboard %>%
+pivot_longer(cols = -c(artist,track,date.entered), names_to = "Week", values_to = "ranking")
+```
+
