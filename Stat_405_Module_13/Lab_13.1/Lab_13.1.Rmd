@@ -1,0 +1,44 @@
+---
+title: "Untitled"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-11-21"
+---
+
+1.) (Use R) A starwars is a tibble in dplyr containing 14 variables about the features of 14 characters in the movie.
+
+```{r}
+library(dplyr)
+data(starwars)
+glimpse(starwars)
+```
+
+a.  How many humans are contained in starwars overall? (Hint. use count())
+
+```{r}
+count(filter(starwars, species == "Human"))
+```
+
+b.  How many feminine humans are contained in starwars?
+
+```{r}
+count(filter(starwars, species == "Human" & gender == "feminine"))
+```
+
+c.  From which homeworld do the most individuals come from?
+
+```{r}
+starwars %>%
+group_by(homeworld) %>%
+summarize(homeworld_count = n()) %>%
+filter(homeworld_count == max(homeworld_count))
+```
+
+d.  What is the mean height of all individuals with orange eyes from the most popular homeworld?
+
+```{r}
+starwars %>%
+filter(eye_color == "orange" & homeworld == "Naboo") %>%
+summarise(mean_height = mean(height))
+```
