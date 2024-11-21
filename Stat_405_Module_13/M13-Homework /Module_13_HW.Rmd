@@ -1,0 +1,80 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-11-21"
+---
+1.) (Use R) Do the following:
+a. Read in the Wide Bike lanes data (“Bike_Lanes_Wide.csv”) from our course website. Name the data
+set wide.
+```{r}
+wide <- read.csv(file="/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13-Homework /Bike_Lanes_Wide.csv",header=TRUE)
+```
+b. Reshape wide using pivot_longer. Call this data long. Make the key lanetype, and the value
+the_length. Make sure we gather all columns but name, using -name. Note the NAs here.
+```{r}
+
+```
+c. Read in the roads and crashes .csv files (“roads.csv” and “crashes.csv”) and call them road and crash.
+```{r}
+
+```
+d. Replace (using str_replace) any hyphens (-) with a space in crash$Road. Call this data crash2.
+Table the Road variable.
+```{r}
+
+```
+e. Separate the Road column (using separate) into (type and number) in crash2. Reassign this to
+crash2. Table crash2$type. Then create a new variable calling it road_hyphen using the unite
+function. Unite the type and number columns using a hyphen (-) and then table road_hyphen.
+```{r}
+
+```
+
+f. Read in the Bike lanes data: “Bike_Lanes.csv”. Name the data set bike.
+```{r}
+
+```
+
+g. Keep rows where the record is not missing type and not missing name and re-assign the output to
+bike.
+```{r}
+
+```
+
+h. Summarize and group the data by grouping name and type (i.e, for each type within each name) and
+take the sum of the length (reassign the sum of the lengths to the length variable). Call this data set
+sub.
+```{r}
+
+```
+
+i. Reshape sub using pivot_wider. Spread the data where the key is type and we want the value in
+the new columns to be length - the bike lane length. Call this wide2. Look at the column names of
+wide2 - what are they? (they also have spaces).
+```{r}
+
+```
+
+j. Join data to retain only complete data, (using an inner_join) e.g., those observations with road
+lengths and districts. Merge without using by argument, then merge using by = "Road". call the
+output merged. How many observations are there?
+```{r}
+
+```
+
+k. Join data using a full_join. Call the output full. How many observations are there?
+```{r}
+
+```
+
+l. Do a left join of the road and crash. ORDER matters here! How many observations are there?
+```{r}
+
+```
+
+m. Repeat above with a right_join with the same order of the arguments. How many observations are
+there?
+```{r}
+
+```
+
