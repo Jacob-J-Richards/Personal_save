@@ -9,9 +9,9 @@ date: "2024-11-21"
 1.) (Use R) A starwars is a tibble in dplyr containing 14 variables about the features of 14 characters in the movie.
 
 ```{r}
-library(dplyr)
-data(starwars)
-glimpse(starwars)
+invisible(library(dplyr))
+invisible(data(starwars))
+invisible(glimpse(starwars))
 ```
 
 a.  How many humans are contained in starwars overall? (Hint. use count())
