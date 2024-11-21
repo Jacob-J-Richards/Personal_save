@@ -1,10 +1,12 @@
 ---
 title: "Untitled"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: "2024-11-21"
 ---
 ```{r}
-setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_13/Lab_13.2")
+setwd("~/Desktop/Personal_save/Stat_405_Module_13/Lab_13.2")
 ```
 
 1.) (Use R) billboard is a data set in tidyr. This is an typical example of a longitudinal data in a wide
