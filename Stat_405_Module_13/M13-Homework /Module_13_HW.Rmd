@@ -7,16 +7,23 @@ date: "2024-11-21"
 a. Read in the Wide Bike lanes data (“Bike_Lanes_Wide.csv”) from our course website. Name the data
 set wide.
 ```{r}
-wide <- read.csv(file="/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13-Homework /Bike_Lanes_Wide.csv",header=TRUE)
+setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13-Homework ")
+wide <- read.csv(file="Bike_Lanes_Wide.csv",header=TRUE)
 ```
 b. Reshape wide using pivot_longer. Call this data long. Make the key lanetype, and the value
 the_length. Make sure we gather all columns but name, using -name. Note the NAs here.
 ```{r}
-
+library(dplyr)
+library(tidyr)
+long <- wide %>% 
+pivot_longer(cols = -name, names_to = "lanetype", values_to = "the_length")
+print(head(long,10))
 ```
 c. Read in the roads and crashes .csv files (“roads.csv” and “crashes.csv”) and call them road and crash.
 ```{r}
-
+setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13-Homework ")
+road <- read.csv(file="roads.csv",header=TRUE)
+crash <- read.csv(file="crashes.csv",header=TRUE)
 ```
 d. Replace (using str_replace) any hyphens (-) with a space in crash$Road. Call this data crash2.
 Table the Road variable.
