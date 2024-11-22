@@ -7,7 +7,9 @@ date: "2024-11-21"
 a. Read in the Wide Bike lanes data (“Bike_Lanes_Wide.csv”) from our course website. Name the data
 set wide.
 ```{r}
-setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13_Homework ")
+library('tidyverse')
+#setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13_Homework")
+setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_13/M13_Homework")
 wide <- read.csv(file="Bike_Lanes_Wide.csv",header=TRUE)
 ```
 b. Reshape wide using pivot_longer. Call this data long. Make the key lanetype, and the value
@@ -21,67 +23,106 @@ print(head(long,10))
 ```
 c. Read in the roads and crashes .csv files (“roads.csv” and “crashes.csv”) and call them road and crash.
 ```{r}
-setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13-Homework ")
+#setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13-Homework")
+setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_13/M13_Homework")
 road <- read.csv(file="roads.csv",header=TRUE)
+road
 crash <- read.csv(file="crashes.csv",header=TRUE)
+crash
 ```
 d. Replace (using str_replace) any hyphens (-) with a space in crash$Road. Call this data crash2.
 Table the Road variable.
 ```{r}
-
+crash2 <- crash %>%
+mutate(Road = str_replace(Road,"[-]"," "))
+table(crash2$Road)
 ```
 e. Separate the Road column (using separate) into (type and number) in crash2. Reassign this to
 crash2. Table crash2$type. Then create a new variable calling it road_hyphen using the unite
 function. Unite the type and number columns using a hyphen (-) and then table road_hyphen.
 ```{r}
+crash2<- crash2 %>%
+  separate(Road, into = c("type", "number"), sep = " ")
+table(crash2$type)
+
+crash2 <- crash2 %>%
+  unite(road_hyphen, type, number, sep = "-")
+table(crash2$road_hyphen)
 
 ```
 
 f. Read in the Bike lanes data: “Bike_Lanes.csv”. Name the data set bike.
 ```{r}
-
+bike <- read.csv(file="Bike_Lanes.csv",header=TRUE)
+bike
 ```
 
 g. Keep rows where the record is not missing type and not missing name and re-assign the output to
 bike.
 ```{r}
-
+bike <- bike %>%
+  filter(type != " ", name != " ")
 ```
 
 h. Summarize and group the data by grouping name and type (i.e, for each type within each name) and
 take the sum of the length (reassign the sum of the lengths to the length variable). Call this data set
 sub.
 ```{r}
-
+sub <- bike %>%
+  group_by(name,type) %>%
+  summarise(length = sum(length))
+sub
 ```
 
 i. Reshape sub using pivot_wider. Spread the data where the key is type and we want the value in
 the new columns to be length - the bike lane length. Call this wide2. Look at the column names of
 wide2 - what are they? (they also have spaces).
 ```{r}
-
+wide2 <- sub %>%
+  pivot_wider(names_from = type, values_from = length)
+wide2
+print(colnames(wide2))
 ```
 
 j. Join data to retain only complete data, (using an inner_join) e.g., those observations with road
 lengths and districts. Merge without using by argument, then merge using by = "Road". call the
 output merged. How many observations are there?
 ```{r}
-
+merged <- inner_join(road,crash)
+merged
+print(nrow(merged))
+merged <- inner_join(road,crash,by="Road")
+merged
+print(nrow(merged))
 ```
+
+There are 88 observations. The function detected the common variable and used it as the identifier for the merge automatically. 
 
 k. Join data using a full_join. Call the output full. How many observations are there?
 ```{r}
-
+full <- full_join(road,crash)
+full
+print(nrow(full))
 ```
+
+There are 111 observations.
 
 l. Do a left join of the road and crash. ORDER matters here! How many observations are there?
 ```{r}
-
+left_crash_road <- left_join(crash,road)
+left_crash_road
+print(nrow(left_crash_road))
 ```
+
 
 m. Repeat above with a right_join with the same order of the arguments. How many observations are
 there?
 ```{r}
-
+right_crash_road <- right_join(crash,road)
+right_crash_road
+print(nrow(right_crash_road))
 ```
+
+
+
 
