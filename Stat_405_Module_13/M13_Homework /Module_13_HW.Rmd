@@ -7,7 +7,7 @@ date: "2024-11-21"
 a. Read in the Wide Bike lanes data (“Bike_Lanes_Wide.csv”) from our course website. Name the data
 set wide.
 ```{r}
-setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13-Homework ")
+setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_13/M13_Homework ")
 wide <- read.csv(file="Bike_Lanes_Wide.csv",header=TRUE)
 ```
 b. Reshape wide using pivot_longer. Call this data long. Make the key lanetype, and the value
