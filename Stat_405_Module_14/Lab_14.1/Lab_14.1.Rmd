@@ -1,0 +1,42 @@
+---
+title: "Untitled"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-11-25"
+---
+
+```{r}
+#setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14")
+setwd("~/Desktop/Personal_save/Stat_405_Module_14")
+test <- read.csv(file="hypothesis.csv",header=TRUE)
+```
+
+The following table shows the time for subjects to feel relief from headache pain:
+
+a.) Perform a t-test. Is either product significantly faster than the other at the 0.05 level?
+
+The data is the same as Lab 6.1 question 1 where the samples were independent so the following independent 2 sample t-test is performed.
+
+Two sample, two tailed, independent t-test.
+
+```{r}
+test$id <- seq(1:nrow(test))
+test
+library(reshape2)
+long_data <- melt(data = test, id.vars = c("id"),
+                   measured.vars = c("Aspirin", "Tylenol"),
+                   variable.name = "Brand", value.name = "Time")
+long_data
+t.test(long_data$Time ~ long_data$Brand)
+```
+
+The p-value resulting from the test is greater than 0.05, fail to reject the null hypothesis that the true difference in means between the groups is zero.
+
+b.) Perform a Wilcoxon rank-sum test.
+```{r}
+wilcox.test(long_data$Time ~ long_data$Brand)
+```
+
+The p-value resulting from the test is greater than 0.05, fail to reject the null hypothesis that the true location shift is equal to zero.
+
