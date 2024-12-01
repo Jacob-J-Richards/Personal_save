@@ -8,11 +8,20 @@ associated with 3 days of baseball games in the 2015 season. One reason people t
 TV ratings are down is because the games last too long. Suppose we want to find out which
 variable has the strongest association with Time of Game to try to make games shorter.
 ```{r}
-setwd("~/Desktop/Personal_save/Stat_405_Module_14/Lab_14.2")
+#setwd("~/Desktop/Personal_save/Stat_405_Module_14/Lab_14.2")
+setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14/Lab_14.2")
 times <- read.csv(file="Game_Times.csv",header=TRUE)
 ```
 
 a. Examine the dataset graphically and draw conclusions.
+
+```{r}
+library(dplyr)
+
+filtered_data <- times %>% select(-Date, -HomeTeam, -AwayTeam)
+
+pairs( filtered_data$Time.of.Game ~ filtered_data)
+```
 
 b. Examine the dataset numerically and draw conclusions.
 
