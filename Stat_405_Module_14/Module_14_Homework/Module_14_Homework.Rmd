@@ -1,0 +1,79 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-12-01"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+1.) (Use R) Consider the dataset “Homework 6 data.xlsx.” It consists of
+5 randomly selected student’s scores on Test 1 and Test 2 in my
+introductory statistics course. We want to answer 2 questions:
+
+```{r}
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+HW_6 <- read.csv(file="Homework_6.csv",header=TRUE)
+HW_6
+```
+
+a.  First, we want to see if there is a difference in the two tests.
+    Paired two-tailed t-test
+
+```{r}
+t.test(HW_6$Test.1, HW_6$Test.2, paired = TRUE)
+```
+
+the p-value is less than 0.05, reject the null hypothesis that the means
+of Test 1 and Test 2 are equal.
+
+b.  Second, we want to see if there was improvement over the course of
+    the semester. H0: Test1 - Test2 \< 0
+
+```{r}
+t.test(HW_6$Test.1, HW_6$Test.2, paired = TRUE, alternative = "less")
+```
+
+Reject the null hypothesis that the mean difference of Test 1 minus Test
+2 is equal to zero. Tentatively conclude that the mean difference of
+test 1 minus test 2 is less than zero, and therefore that the the grades
+of the second test were better than the first.
+
+**CHECK THIS ONE LATER (Q2)**
+
+2.) (Use R) The data called “plasma” from Anderson et al. (1981)
+consists of measurements of plasma concentrations in micromoles/liter
+from 10 subjects at times of 8 am, 11am, 2pm, 5 pm, and 8 pm. Analyze
+the data in a 1-way ANOVA model choosing time as factor.
+
+```{r}
+plasma <- read.csv(file="plasma.csv",header=TRUE)
+plasma$time <- factor(plasma$time,levels=c("8am", "11am", "2pm", "5pm", "8pm"), 
+                      labels = c("8am", "11am", "2pm", "5pm", "8pm"))
+
+plasma_model <- lm(plasma ~ time, data = plasma)
+anova(plasma_model)
+```
+
+3.) Two friends play a computer game and each of them repeats the same
+level 10 times. The scores obtained are:
+
+```{r}
+scores <- read.table(file="scores.txt",header=TRUE)
+```
+un-paired, two-tailed, t-test 
+```{r}
+
+```
+
+a.  Player 2 insists that he is the better player and suggests to
+    compare their mean performance. Use a t-test to test whether there
+    is a difference between their mean performance (alpha = 0.05).
+
+    ```{r}
+
+    ```
+
+b.  Player 1 insists that he is the better player. He proposes to use
+    the Wilcoxon rank-sum test for the comparison. What are the results
+    (alpha = 0.05)?

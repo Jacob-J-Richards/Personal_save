@@ -1,0 +1,118 @@
+---
+title: "Untitled"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-12-01"
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+1.) (IN R) Consider the text file called muscle which consists of paired
+data of individual’s muscle mass and age. We want to examine this
+relationship.
+
+```{r}
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Lab_14.3")
+muscle <- read.table(file="muscle.txt",header=TRUE)
+```
+
+a.  Begin by looking at a scatterplot and finding the correlation. Does
+    the association look linear? How strong is it?
+
+```{r}
+muscle
+plot(x=muscle$age,y=muscle$mass)
+cor(x=muscle$age,y=muscle$mass)
+```
+
+The association looks linear, and very strong.
+
+b.  Produce the necessary diagnostic plots to prepare to fit a
+    regression model.
+
+fitted values means predicted response values.
+
+-   Residuals vs. Predicted Response
+
+-   Residuals vs. Predictor
+
+-   Studentized Residuals vs. Predictor
+
+-   QQ plot of Residuals
+
+```{r}
+library(ggplot2)
+model <- lm(muscle$mass ~ muscle$age) 
+
+res <- resid(model)
+fit <- fitted(model)
+
+#Residuals vs. Predicted Response 
+ggplot(mapping = aes(x = fit, y = res)) +
+    geom_point() +
+    geom_hline(yintercept = 0, colour = "red", linetype = "dashed")
+
+#Residuals vs. Predictor 
+ggplot(mapping = aes(x = muscle$age, y = res)) +
+    geom_point() +
+    geom_hline(yintercept = 0, colour = "red", linetype = "dashed")
+
+#Studentized Residuals vs. Predictor observation number 
+plot(rstudent(model) ~ seq(1,length(muscle$age),by=1))
+
+#QQ plot of Residuals 
+ggplot(mapping = aes(sample = res)) +
+    stat_qq() + 
+    stat_qq_line()
+
+
+library(ggfortify)
+autoplot(model, which = 1:6, ncol = 2, label.size = 3)
+```
+
+c.  Using this information, would you recommend going ahead and fitting
+    a simple linear regression model to this data? (Do not fit the model
+    yet, just answer yes or no and provide evidence)
+
+    Yes I would recommend fitting a linear model, everything appears
+    random with no significant patters. Observation 11 is particularly
+    influential in the leverage plot and has a relatively high
+    studentised residual but not enough to warrant removal.
+
+<!-- -->
+
+c.  Write a code to fit a simple linear regression model.
+
+    ```{r}
+    model <- lm(mass ~ age, data = muscle) 
+    summary(model)
+    ```
+
+d.  What does the slope mean?
+
+    The meaning of the slope is that as age increases by one year the
+    model predicts that muscle mass will decrease by about one unit of
+    measurement.
+
+e.  Predict the muscle mass for a 66-year-old person. (Hint: use the
+    predict( ) function. Further detail of the predict function for
+    linear regression model can be found in the R documentation.
+    help(predict.lm))
+
+    ```{r}
+    predicted_mass <- predict(model, newdata = data.frame(age = 66))
+    predicted_mass
+    ```
+
+f.  Calculate a 98% CI for the muscle mass for a 40-year-old. (Hint: use
+    the predict( ) function.)
+
+    ```{r}
+    prediction_40 <- predict(model, newdata = data.frame(age = 40), 
+                                    interval = "confidence", 
+                                    level = 0.98)
+
+    prediction_40
+    ```

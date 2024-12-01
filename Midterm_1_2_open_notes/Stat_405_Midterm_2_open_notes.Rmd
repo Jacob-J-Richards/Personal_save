@@ -535,7 +535,7 @@ aggregate(height ~ nitrogen + treat, FUN = mean, subset = block == "1", data = f
 ## base plot function
 
 ```{r,eval=FALSE}
-setwd("C:/Users/jake pc/Desktop/stat 405 MIDTERM 2")
+setwd("/Users/jacobrichards/Desktop/Personal_save/Midterm_1_2_open_notes")
 flowers <- read.csv(file="flowers.csv",header=TRUE)
 
 
@@ -628,7 +628,7 @@ dotchart(flowers$height)
 ## dotcharts stratified
 
 ```{r}
-dotchart(flowers$height, groups = flowers$nitrogen)
+#dotchart(flowers$height, groups = flowers$nitrogen)
 ```
 
 ## pairs plots (correlation matrix)
