@@ -1,0 +1,17 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-11-25"
+---
+
+```{r}
+setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14")
+test <- read.csv(file="hypothesis.csv",header=TRUE)
+```
+
+Perform a t-test. Is either product significantly faster than the other at the 0.05 level?
+
+```{r}
+
+```
+
