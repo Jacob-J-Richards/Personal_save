@@ -60,20 +60,148 @@ level 10 times. The scores obtained are:
 
 ```{r}
 scores <- read.table(file="scores.txt",header=TRUE)
-```
-un-paired, two-tailed, t-test 
-```{r}
-
+scores
 ```
 
 a.  Player 2 insists that he is the better player and suggests to
     compare their mean performance. Use a t-test to test whether there
     is a difference between their mean performance (alpha = 0.05).
 
-    ```{r}
+    un-paired, two-tailed, t-test
 
-    ```
+```{r}
+transposed_df <- as.data.frame(t(scores), stringsAsFactors = FALSE)
+colnames(transposed_df) <- transposed_df[1, ]
+transposed_df <- transposed_df[-1, ]
+transposed_df$ID <- rownames(transposed_df)
+row.names(transposed_df) <- NULL
+transposed_df
 
-b.  Player 1 insists that he is the better player. He proposes to use
-    the Wilcoxon rank-sum test for the comparison. What are the results
-    (alpha = 0.05)?
+library(reshape2)
+long_scores <- melt(data = transposed_df, id.vars = c("ID"),
+                   measured.vars = c("Player1", "Player2"),
+                   variable.name = "Player", value.name = "Score")
+long_scores$Score <- as.numeric(long_scores$Score)
+
+#you have to check for equality of variances before the t-test because it's a function call option not done automatically 
+var.test(long_scores$Score ~ long_scores$Player)
+#reject null hypothesis that the variances are equal 
+t.test(long_scores$Score ~ long_scores$Player, var.equal = FALSE)
+
+```
+
+P-value is greater than 0.05, fail to reject the null-hypothesis that
+the mean score for both players is equal.
+
+b\. Player 1 insists that he is the better player. He proposes to use
+the Wilcoxon rank-sum test for the comparison. What are the results
+(alpha = 0.05)?
+
+```{r}
+wilcox.test(long_scores$Score ~ long_scores$Player)
+```
+
+The p-value obtained is 0.03749 which is less than 0.05, we therefore
+reject the null hypothesis that the true location shift is equal to
+zero.
+
+4.) (Use R)
+
+\
+A random sample of 90 adults is classified according to gender and the
+number of hours of television watched\
+during a week:\
+
+\
+Use a 0.01 level of significance and test the hypothesis that the time
+spent watching television is independent\
+of whether the viewer is male or female.
+
+```{r}
+table <- matrix(data=c(15,29,27,19),nrow=2,ncol=2,byrow=TRUE,dimnames = list(c("Over 25 hours", "Under 25 hours"),c("Male", "Female")))
+table <- t(table)
+table
+chisq.test(table)
+
+
+```
+
+The p-value obtained is 0.03338 which is greater than 0.01, we therefore
+fail to reject the null hypothesis that time spent watching television
+is independent of whether the viewer is male or female.
+
+\
+Note: chisq.test() performs chi-squared contingency table tests and
+goodness-of-fit tests in R. By default,\
+the continuity correction is used when computing the test statistic for
+2 by 2 tables. To use the chi-square test\
+without continuity correction, you should add the correct =FALSE option.
+Please read the R documentation\
+in chisq.test for details.
+
+5.) (Use R)
+
+\
+The data set named “Movies” contains a random sample of 35 movies
+released in 2008. This sample was\
+collected from the Internet Movie Database (IMDb). The goal of this
+problem is to explore if the information\
+available soon after a movie’s theatrical release can successfully
+predict total revenue. All dollar amounts (i.e.,\
+variables Budget, Opening, and USRevenue) are measured in millions of
+dollars. Consider three explanatory\
+variables:
+
+-   The movie’s budget (variable named Budget).
+
+-   Opening weekend revenue (variable named Opening).
+
+-   Number of theaters showing the movie (variable named Theaters).
+
+```{r}
+Movies <- read.csv(file="Movies.csv",header=TRUE)
+```
+
+This problem considers using each of these explanatory variables to
+attempt to predict a movie’s total US\
+revenue (variable named USRevenue).
+
+\
+a. Investigate the relationship between the explanatory variable Budget
+and response variable USRevenue\
+by doing the following:
+
+\
+i) Make a scatterplot.
+
+\
+ii) Calculate the correlation coefficient.
+
+\
+iii) Interpret the scatterplot and correlation coefficient in terms of
+trend, strength, and shape.
+
+\
+b. Repeat part (a) for the explanatory variable Opening.\
+c. Repeat part (a) for the explanatory variable Theaters.\
+d. Based on your findings in parts (a) through (c), which of the three
+explanatory variables would be most\
+appropriate for predicting the response variable USRevenue? Justify your
+choice in a few sentences.\
+e. For the “most appropriate” variable identified in part (d), run a
+Simple Linear Regression analysis.\
+f. State the regression equation.\
+g. Interpret the slope of the regression line (in context of this data
+set).\
+h. Is it meaningful to interpret the y-intercept? Why or why not?\
+i. State r-squared (i.e., the coefficient of determination) and explain
+what this value means (in context of\
+the data set).\
+j. Use the regression equation from part (f) to predict the total US
+revenue for the movie named Get\
+Smart. (Budget was 80 million dollars; it was shown in 3911 theaters;
+and its opening weekend revenue\
+was 38.7 million dollars.) State your predicted value in a sentence that
+is in context of the data. Don’t\
+forget units!\
+2
