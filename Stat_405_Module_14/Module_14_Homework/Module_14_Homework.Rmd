@@ -12,7 +12,8 @@ editor_options:
 introductory statistics course. We want to answer 2 questions:
 
 ```{r}
-setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+#setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
 HW_6 <- read.csv(file="Homework_6.csv",header=TRUE)
 HW_6
 ```
@@ -160,6 +161,7 @@ variables:
 
 ```{r}
 Movies <- read.csv(file="Movies.csv",header=TRUE)
+Movies
 ```
 
 This problem considers using each of these explanatory variables to
@@ -174,34 +176,122 @@ by doing the following:
 \
 i) Make a scatterplot.
 
+```{r}
+plot(x = Movies$Budget, y = Movies$USRevenue)
+```
+
 \
 ii) Calculate the correlation coefficient.
+
+```{r}
+cor(x = Movies$Budget, y = Movies$USRevenue)
+
+```
 
 \
 iii) Interpret the scatterplot and correlation coefficient in terms of
 trend, strength, and shape.
 
+The correlation coefficient is in the moderate strength range but just
+below the strong threshold of plus/minus 0.8, the trend is positive such
+that as budget increases US revenue increases. The scatter plot has a
+wedge shape such that as budget increases the USRevenue becomes more
+variable, this is a problem and will produce a "wedge shape" in the
+residuals plot.
+
 \
-b. Repeat part (a) for the explanatory variable Opening.\
-c. Repeat part (a) for the explanatory variable Theaters.\
+b. Repeat part (a) for the explanatory variable Opening.
+
+```{r}
+plot(x = Movies$Opening, y = Movies$USRevenue)
+cor(x = Movies$Opening, y = Movies$USRevenue)
+```
+
+The trend is positive with a correlation coefficient of 0.9840177 which
+is a strong correlation but almost perfect. The relationship between
+these variables has no disturbing patters of increasing variability as
+the predictor variable increases as the last one did.
+
+\
+c. Repeat part (a) for the explanatory variable Theaters.
+
+```{r}
+plot(x = Movies$Theaters, y = Movies$USRevenue)
+cor(x = Movies$Theaters, y = Movies$USRevenue)
+```
+
+The trend is positive with a correlation coefficient of 0.7153432 which
+is a moderate correlation. The relationship between these variables has
+a very obvious curvature.
+
+\
 d. Based on your findings in parts (a) through (c), which of the three
 explanatory variables would be most\
 appropriate for predicting the response variable USRevenue? Justify your
-choice in a few sentences.\
+choice in a few sentences.
+
+Opening is the best choice as predictor variable. The relationship
+between Opening and Us Revenue has a positive correlation coefficient
+that is almost perfect (.98) and the scatter plot indicates no pattern
+other than positive linearity. Budget is completely unsuitable as the
+residuals of the fitted values would increase as budget increased.
+Theaters is unsuitable as it's relationship is non-linear.
+
+\
 e. For the “most appropriate” variable identified in part (d), run a
-Simple Linear Regression analysis.\
-f. State the regression equation.\
+Simple Linear Regression analysis.
+
+```{r}
+Opening_Model <- lm(USRevenue ~ Opening, data=Movies)
+plot(USRevenue ~ Opening, data=Movies)
+intercept_slope <- coefficients(Opening_Model)
+abline(a=intercept_slope[1],b=intercept_slope[2])
+summary(Opening_Model)
+```
+
+\
+f. State the regression equation.
+
+Predicted US Revenue = 3.277\*Opening - 6.9619
+
+\
 g. Interpret the slope of the regression line (in context of this data
-set).\
-h. Is it meaningful to interpret the y-intercept? Why or why not?\
+set).
+
+As Opening sales increases by 1 million, Predicted US Revenue will
+increase by 3.277 million.
+
+\
+h. Is it meaningful to interpret the y-intercept? Why or why not?
+
+The y-intercept in this model is not meaningful as it's p-value for
+testing the null hypothesis that the intercept is equal to zero is
+greater than 0.05 and thus fails to reject the null hypothesis that the
+true y-intercept is zero.
+
+\
 i. State r-squared (i.e., the coefficient of determination) and explain
 what this value means (in context of\
-the data set).\
+the data set).
+
+The R-squared produced by the model summary is .9683 which means that
+about 97% of the variance of the response variable US Revenue is
+explained by the value of the Predictor variable opening.
+
+\
 j. Use the regression equation from part (f) to predict the total US
 revenue for the movie named Get\
 Smart. (Budget was 80 million dollars; it was shown in 3911 theaters;
 and its opening weekend revenue\
 was 38.7 million dollars.) State your predicted value in a sentence that
 is in context of the data. Don’t\
-forget units!\
-2
+forget units!
+
+```{r}
+predicted_USRevenue <- predict(Opening_Model, newdata = data.frame(Opening = 38.7))
+cat("The linear model predictes that the movie Get Smart which had an opening weekend revenue of 38.7 million dollars would have a total US Revenue of", predicted_USRevenue,"million dollars.")
+```
+
+The linear model predictes that the movie Get Smart which had an opening
+weekend revenue of 38.7 million dollars would have a total US Revenue of
+119.884 million dollars.
