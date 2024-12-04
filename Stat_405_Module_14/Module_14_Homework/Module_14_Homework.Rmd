@@ -1,9 +1,11 @@
 ---
 title: "Untitled"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: "2024-12-01"
-editor_options: 
-  markdown: 
+editor_options:
+  markdown:
     wrap: 72
 ---
 
@@ -12,8 +14,8 @@ editor_options:
 introductory statistics course. We want to answer 2 questions:
 
 ```{r}
-#setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
-setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+#setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
 HW_6 <- read.csv(file="Homework_6.csv",header=TRUE)
 HW_6
 ```
@@ -25,7 +27,7 @@ a.  First, we want to see if there is a difference in the two tests.
 t.test(HW_6$Test.1, HW_6$Test.2, paired = TRUE)
 ```
 
-the p-value is less than 0.05, reject the null hypothesis that the means
+The p-value is less than 0.05, reject the null hypothesis that the means
 of Test 1 and Test 2 are equal.
 
 b.  Second, we want to see if there was improvement over the course of
@@ -38,9 +40,7 @@ t.test(HW_6$Test.1, HW_6$Test.2, paired = TRUE, alternative = "less")
 Reject the null hypothesis that the mean difference of Test 1 minus Test
 2 is equal to zero. Tentatively conclude that the mean difference of
 test 1 minus test 2 is less than zero, and therefore that the the grades
-of the second test were better than the first.
-
-**CHECK THIS ONE LATER (Q2)**
+of the second test were greater (better) than the first.
 
 2.) (Use R) The data called “plasma” from Anderson et al. (1981)
 consists of measurements of plasma concentrations in micromoles/liter
@@ -52,23 +52,29 @@ plasma <- read.csv(file="plasma.csv",header=TRUE)
 plasma$time <- factor(plasma$time,levels=c("8am", "11am", "2pm", "5pm", "8pm"), 
                       labels = c("8am", "11am", "2pm", "5pm", "8pm"))
 
+plasma
 plasma_model <- lm(plasma ~ time, data = plasma)
 anova(plasma_model)
 ```
+
+The p-value from this test is greater than 0.05, we therefore fail to
+reject the null hypothesis that blood plasma levels are not different at
+different times.
 
 3.) Two friends play a computer game and each of them repeats the same
 level 10 times. The scores obtained are:
 
 ```{r}
 scores <- read.table(file="scores.txt",header=TRUE)
-scores
+scores 
 ```
 
 a.  Player 2 insists that he is the better player and suggests to
     compare their mean performance. Use a t-test to test whether there
     is a difference between their mean performance (alpha = 0.05).
 
-    un-paired, two-tailed, t-test
+    They are both playing the same level, this is paired 2 tailed
+    t-test.
 
 ```{r}
 transposed_df <- as.data.frame(t(scores), stringsAsFactors = FALSE)
@@ -76,19 +82,11 @@ colnames(transposed_df) <- transposed_df[1, ]
 transposed_df <- transposed_df[-1, ]
 transposed_df$ID <- rownames(transposed_df)
 row.names(transposed_df) <- NULL
-transposed_df
+transposed_df$Player1 <- as.numeric(transposed_df$Player1)
+transposed_df$Player2 <- as.numeric(transposed_df$Player2)
+write.csv(transposed_df,file="pairedtest.csv")
 
-library(reshape2)
-long_scores <- melt(data = transposed_df, id.vars = c("ID"),
-                   measured.vars = c("Player1", "Player2"),
-                   variable.name = "Player", value.name = "Score")
-long_scores$Score <- as.numeric(long_scores$Score)
-
-#you have to check for equality of variances before the t-test because it's a function call option not done automatically 
-var.test(long_scores$Score ~ long_scores$Player)
-#reject null hypothesis that the variances are equal 
-t.test(long_scores$Score ~ long_scores$Player, var.equal = FALSE)
-
+t.test(transposed_df$Player1, transposed_df$Player2, paired=TRUE)
 ```
 
 P-value is greater than 0.05, fail to reject the null-hypothesis that
@@ -99,19 +97,16 @@ the Wilcoxon rank-sum test for the comparison. What are the results
 (alpha = 0.05)?
 
 ```{r}
-wilcox.test(long_scores$Score ~ long_scores$Player)
+wilcox.test(transposed_df$Player1, transposed_df$Player2, paired=TRUE)
 ```
 
-The p-value obtained is 0.03749 which is less than 0.05, we therefore
-reject the null hypothesis that the true location shift is equal to
-zero.
+The resulting p-value is greater than 0.05, we therefore fail to reject
+the null hypothesis the true location shift is equal to zero.
 
-4.) (Use R)
-
-\
+4.) (Use R)\
 A random sample of 90 adults is classified according to gender and the
 number of hours of television watched\
-during a week:\
+during a week:
 
 \
 Use a 0.01 level of significance and test the hypothesis that the time
@@ -123,22 +118,11 @@ table <- matrix(data=c(15,29,27,19),nrow=2,ncol=2,byrow=TRUE,dimnames = list(c("
 table <- t(table)
 table
 chisq.test(table)
-
-
 ```
 
 The p-value obtained is 0.03338 which is greater than 0.01, we therefore
 fail to reject the null hypothesis that time spent watching television
 is independent of whether the viewer is male or female.
-
-\
-Note: chisq.test() performs chi-squared contingency table tests and
-goodness-of-fit tests in R. By default,\
-the continuity correction is used when computing the test statistic for
-2 by 2 tables. To use the chi-square test\
-without continuity correction, you should add the correct =FALSE option.
-Please read the R documentation\
-in chisq.test for details.
 
 5.) (Use R)
 
@@ -207,10 +191,13 @@ plot(x = Movies$Opening, y = Movies$USRevenue)
 cor(x = Movies$Opening, y = Movies$USRevenue)
 ```
 
-The trend is positive with a correlation coefficient of 0.9840177 which
-is a strong correlation but almost perfect. The relationship between
-these variables has no disturbing patters of increasing variability as
-the predictor variable increases as the last one did.
+The trend is positive such that as the variable opening increase so the
+variable USRevenue. The variables have a correlation coefficient of
+0.9840177 which is classified as a strong correlation but it is almost
+perfect. The relationship between these variables has pattern other than
+a linear relationship between predictor and response, and has no
+disturbing patters of increasing variability as the predictor variable
+increases as the last one did.
 
 \
 c. Repeat part (a) for the explanatory variable Theaters.
@@ -220,9 +207,11 @@ plot(x = Movies$Theaters, y = Movies$USRevenue)
 cor(x = Movies$Theaters, y = Movies$USRevenue)
 ```
 
-The trend is positive with a correlation coefficient of 0.7153432 which
-is a moderate correlation. The relationship between these variables has
-a very obvious curvature.
+The trend is positive such that as variable theaters increases so does
+the variable USRevenue. The variables have a correlation coefficient of
+0.7153432 which is classified as a moderate correlation. The
+relationship between these variables has a very obvious curvature which
+appears almost exponential.
 
 \
 d. Based on your findings in parts (a) through (c), which of the three
@@ -230,12 +219,14 @@ explanatory variables would be most\
 appropriate for predicting the response variable USRevenue? Justify your
 choice in a few sentences.
 
-Opening is the best choice as predictor variable. The relationship
-between Opening and Us Revenue has a positive correlation coefficient
-that is almost perfect (.98) and the scatter plot indicates no pattern
-other than positive linearity. Budget is completely unsuitable as the
-residuals of the fitted values would increase as budget increased.
-Theaters is unsuitable as it's relationship is non-linear.
+Opening is the best choice as predictor variable. The trend is positive
+such that as the variable opening increase so the variable USRevenue.
+The relationship between Opening and Us Revenue has a positive
+correlation coefficient that is almost perfect (.98) and the scatter
+plot indicates no pattern other than a positive linearlity. The variable
+Budget is completely unsuitable as the residuals of the fitted values
+would increase as budget increased. Theaters is unsuitable as it's
+relationship is non-linear.
 
 \
 e. For the “most appropriate” variable identified in part (d), run a
@@ -264,19 +255,19 @@ increase by 3.277 million.
 \
 h. Is it meaningful to interpret the y-intercept? Why or why not?
 
-The y-intercept in this model is not meaningful as it's p-value for
+The y-intercept in this model is not meaningful as it's p-value from
 testing the null hypothesis that the intercept is equal to zero is
-greater than 0.05 and thus fails to reject the null hypothesis that the
-true y-intercept is zero.
+greater than 0.05 and thus the null hypothesis that the true y-intercept
+is zero fails to be rejected.
 
 \
 i. State r-squared (i.e., the coefficient of determination) and explain
 what this value means (in context of\
 the data set).
 
-The R-squared produced by the model summary is .9683 which means that
-about 97% of the variance of the response variable US Revenue is
-explained by the value of the Predictor variable opening.
+The R-squared of the model is .9683 which means that about 97% of the
+variance of the response variable US Revenue is explained by the value
+of the Predictor variable opening.
 
 \
 j. Use the regression equation from part (f) to predict the total US
@@ -292,6 +283,6 @@ predicted_USRevenue <- predict(Opening_Model, newdata = data.frame(Opening = 38.
 cat("The linear model predictes that the movie Get Smart which had an opening weekend revenue of 38.7 million dollars would have a total US Revenue of", predicted_USRevenue,"million dollars.")
 ```
 
-The linear model predictes that the movie Get Smart which had an opening
+The linear model predicts that the movie Get Smart which had an opening
 weekend revenue of 38.7 million dollars would have a total US Revenue of
 119.884 million dollars.
