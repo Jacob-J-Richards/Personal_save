@@ -678,7 +678,74 @@ wilcox.test(atmos$moisture ~ atmos$treatment)
 
 ## Paired t-tests
 
-Paired data are where there are two measurements on the same experimental unit (individual, site, etc.)
+Paired data are where there are two measurements on the same experimental unit (individual, site, etc.) For example, the `pollution` dataset gives the biodiversity score of aquatic invertebrates collected using kick samples in 17 different rivers. These data are paired because two samples were taken on each river, one upstream of a paper mill and one downstream. Each individual observation pair originated from the same place.
+
+```{r}
+pollution <- read.table('pollution.txt', header = TRUE)
+str(pollution)
+
+t.test(pollution$down, pollution$up, paired = TRUE)
+
+wilcox.test(pollution$down, pollution$up, paired = TRUE)
+```
+
+## Prop test and chisq test
+
+### prop test 
+
+advertising campaign, counts of those would and would not buy are taken before and after
+
+are the proportions significantly different?
+
+|                                |                            |                         |
+|:------------------------------:|:--------------------------:|:-----------------------:|
+|                                | before = **no treatment**  |  after = **treatment**  |
+|   would buy = **+ outcome**    |             45             |           71            |
+| would not buy = **- outcome**  |             35             |           32            |
+
+```{r}
+buy <- c(45,71)                     # creates a vector of positive outcomes
+total <-c((45 + 35), (71 + 32))   # creates a vector of total numbers
+prop.test(buy, total)   
+```
+
+same thing but perform a chi-square test - you can also use the chisq.test function on raw un-tabulated data
+
+```{r}
+buyers <- matrix(c(45, 35, 71, 32), nrow = 2)
+chisq.test(buyers)
+```
+
+14.2
+
+## correlation 
+
+Pearson’s product-moment correlation coefficient between two continuous variables is the default correlation coefficient in the function
+
+these values are only meaningful under the assumption of linear relationships
+
+```{r}
+cor(trees$Height, trees$Volume) #select specific variables 
+
+cor(trees) #or produce a matrix of the coef's 
+
+cor(trees, use = "complete.obs") #if theres is an NA 
+```
+
+to test if these correlation coefficients are statistically significant you need to use.
+
+```{r}
+cor.test(trees$Height, trees$Volume)
+```
+
+non parametric options
+
+```{r}
+cor.test(trees$Height, trees$Volume, method = "spearman")
+cor.test(trees$Height, trees$Volume, method = "kendall")
+```
+
+14.3
 
 ```{r}
 
