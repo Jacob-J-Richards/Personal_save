@@ -89,7 +89,7 @@ filter(flights, dest == "IAH")
 filter(flights, arr_delay <= 120 | dep_delay > 120)
 ```
 
-## mutate() - Create new variables 
+## mutate() - apply a transformation to a variable or make new one 
 
 ```{r}
 # from left to right future variables can use previous ones within the same statement 
@@ -97,7 +97,7 @@ mutate(flights, gain = arr_delay - dep_delay, hours = air_time/60, gain_per_hour
 
 ```
 
-### transmute() 
+### transmute()
 
 ```{r}
 # same thing as filter but all variables other than the new ones just created will be removed
@@ -131,7 +131,7 @@ head(mutated)
 
 ```
 
-## arrange() - reorder rows 
+## arrange() - reorder rows
 
 ```{r}
 #reorder rows by numeric aescending value by default 
@@ -163,6 +163,7 @@ summarize(by_day, delay = mean(dep_delay, na.rm = TRUE))
 ```
 
 summarize functions
+
 ```{r}
 # mean(), median(), sum(), min(), max(), sd(), var(), ... 
 ```
@@ -179,7 +180,7 @@ flights %>%
             geom_smooth(se = FALSE)
 ```
 
-## more pipe-lines %\>% 
+## more pipe-lines %\>%
 
 ```{r}
 iris #remember you need to declare it as a tibble 
@@ -223,8 +224,6 @@ HSB %>%
   group_by(race) %>%
     summarise(n=n())
 
-#equivalently 
-
 # count() will tell you how many observations there are of each of the possible unique values within the variable
 HSB %>% 
   count(race)
@@ -236,6 +235,7 @@ HSB %>%
 ```
 
 example of filtering and then summarizing
+
 ```{r}
 #means of all of these variables for all students
 HSB %>% 
@@ -265,8 +265,37 @@ HSB %>%
 
 ```
 
+```{r}
+library(dplyr)
+data(starwars)
+glimpse(starwars) # similar to str() in Base R
 
-13.1.12
+#a. How many humans are contained in starwars overall? (Hint. use count())
+starwars %>%
+  filter(species == "Human") %>%
+    summarise(observations = n())
+
+#b. How many feminine humans are contained in starwars?
+starwars %>%
+  filter(species == "Human" & gender == "feminine") %>%
+    summarise(observations = n())
+
+
+#c. From which homeworld do the most individuals come from?
+starwars %>%
+  group_by(homeworld) %>%
+    summarise(observations = n()) %>%
+      filter(observations == max(observations))
+
+  
+#d. What is the mean height of all individuals with orange eyes from the most popular homeworld?
+starwars %>%
+  filter(eye_color == "orange" & homeworld == "Naboo") %>%
+    summarise(mean_height = mean(height))
+
+```
+
+## tibble joins
 
 ```{r}
 library(tidyverse)
@@ -288,6 +317,214 @@ y <- tribble(
 
 ```{r}
 
+  #  inner_join() keeps observations that appear in both data frames
+  #  left_join() keeps all observations in x
+  #  right_join() keeps all observations in y
+  #  full_join() keeps all observations in x and y
+
 ```
 
+inner join - retains all variables which correspond to matching keys of both sets
 
+```{r}
+inner_join_1<- x %>% 
+  inner_join(y, by = "key")
+
+inner_join_1
+
+#equivalently 
+inner_join_2 <- inner_join(x, y, by = "key")
+```
+
+left join - retains all variables which correspond to the keys of x
+
+```{r}
+left_join <- x %>% 
+  left_join(y, by = "key")
+left_join
+
+#equivalently 
+left_join(x, y, by = "key")
+```
+
+right join - retains all variables which correspond to the keys of y
+
+```{r}
+right_join <- x %>%
+  right_join(y,by = "key")
+right_join
+
+#equivalently
+right_join(x, y, by = "key")
+```
+
+full join - retains all variables which correspond to all keys present in both sets
+
+```{r}
+full_join <- x %>%
+   full_join(y,by="key")
+full_join
+
+#equivalently
+full_join(x, y, by = "key")
+```
+
+## tibble reshape
+
+```{r}
+
+ #   pivot_longer() lengthens data, increasing the number of rows and decreasing the #number of columns (i.e., turning columns into rows)
+    
+    
+ #   pivot_wider() widens data, increasing the number of columns and decreasing the #number of rows (i.e., turning rows into columns)
+    
+    
+ #   separate() separates a character column into multiple columns with a regular #expression or numeric locations
+# as in a column containing ab-01 becomes two columns ab   01 
+   
+    
+  #   unite() unites multiple columns into one by pasting strings together
+      # the reverse of the previous 
+
+```
+
+```{r}
+iris <- as_tibble(iris)
+
+iris
+
+# wide to long 
+iris %>%
+     pivot_longer(cols = -Species, names_to = "Measurements", values_to = "Values")
+
+
+# seperate 
+iris %>%
+     pivot_longer(cols = -Species, names_to = "Measurements", values_to = "Values") %>%
+          separate(col = Measurements, into = c("Part", "Measure")) #it registered the . as the seperator
+
+# now that you've organized the data this way you can easily produce this complex plot 
+iris %>%
+  pivot_longer(cols = -Species, names_to = "Measures", values_to = "Values") %>%
+  separate(col = Measures, into = c("Part", "Measure")) %>%
+  ggplot(aes(x = Species, y = Values, color = Part)) + 
+    geom_jitter() + 
+    facet_grid(cols = vars(Measure)) + 
+    theme_minimal()
+
+```
+
+wide to long
+
+```{r}
+table <- as_tibble(table4a)
+table
+
+long <- table %>%
+  pivot_longer(cols=c("1999","2000"), names_to = "Year", values_to = "cases" )
+
+long
+```
+
+```{r}
+billboard
+
+long <- billboard %>%
+  pivot_longer(cols = wk1:wk76, names_to = "Week", values_to = "Rank", values_drop_na = TRUE)
+long
+```
+
+long to wide
+
+```{r}
+table2 <- as_tibble(table2)
+
+table2
+
+#pivot_wider(data, names_from, values_from)
+
+  #  names_from = A string specifying the name of the column to get the name of the output column
+  #  values_from = A string specifying the name of the column to get the cell values from
+
+
+wide <- table2 %>%
+  pivot_wider(names_from = c("type"),values_from = "count")
+
+wide
+```
+
+separate
+
+```{r}
+table3
+
+#by default any non alphanumeric char will be registered as the seperator
+
+table3 %>%
+  separate(rate, into = c("cases","population"))
+
+# or explicitly sepcify the seperator
+table3 %>%  separate(rate, into = c("cases", "population"), sep = "/")
+
+#convert from char to the data type it's best suited 
+table3 %>%   
+  separate(rate, into = c("cases", "population"), convert = TRUE)
+
+# or you can specify by location, posative is left to right and sep = -2 is right to left 
+table3 %>%   
+  separate(year, into = c("century", "year"), sep = 2)
+
+```
+
+unite
+
+```{r}
+table5
+
+table5 %>%
+  unite(combined_column, century, year) # wil use _ by default 
+
+
+table5 %>%
+  unite(combined_column, century, year, sep = "") #specify none
+```
+
+## module 13 homework
+
+```{r}
+setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Final_Exam")
+bike <- read.csv(file="Bike_Lanes.csv",header=TRUE)
+road <- read.csv(file="roads.csv",header=TRUE)
+crash <- read.csv(file="crashes.csv",header=TRUE)
+wide <- read.csv(file="Bike_Lanes_Wide.csv",header=TRUE)
+
+
+```
+
+Reshape wide using pivot_longer. Call this data long. Make the key lanetype, and the value\
+the_length. Make sure we gather all columns but name, using -name. Note the NAs here
+
+```{r}
+wide
+
+long <- wide %>%
+    pivot_longer(cols = -name, names_to = "lanytype", values_to = "the_length",values_drop_na = TRUE)
+long
+```
+
+Replace (using str_replace) any hyphens (-) with a space in crash\$Road. Call this data crash2.\
+Table the Road variable.
+
+```{r}
+# reassaigns the Road variable with the output of str_replace
+crash2 <- crash %>% mutate(Road = str_replace(Road, "-", " "))
+table(crash2$Road)
+```
+
+Separate the Road column (using separate) into (type and number) in crash2. Reassign this to\
+crash2. Table crash2\$type. Then create a new variable calling it road_hyphen using the unite\
+function. Unite the type and number columns using a hyphen (-) and then table road_hyphen.
+
+```{r}
+
+```
