@@ -3,3 +3,272 @@ title: "Untitled"
 output: html_document
 date: "2024-12-03"
 ---
+
+# Module 13
+
+## select() - selecting variables (columns)
+
+```{r}
+library(nycflights13)
+library(tidyverse)
+names(flights)
+#you can subset variables like this
+select(flights,year,month,day)
+
+#you can selected ranges of variables (columns) without using the column number 
+select(flights,year:day)
+
+
+#and just do this for the compliment
+select(flights,!(year:day))
+
+
+```
+
+selection functions for subsetting exactly what you want
+
+```{r}
+
+#starts_with(): Starts with a prefix.
+
+#ends_with(): Ends with a suffix.
+
+#contains(): Contains a literal string.
+
+#matches(): Matches a regular expression.
+
+#num_range(): Matches a numerical range like x01, x02, x03.
+
+```
+
+examples of how to use these selection functions
+
+```{r}
+select(flights, starts_with("dep"))
+
+select(flights, ends_with("time"))
+
+select(flights, contains("time"))
+
+# this is or 
+select(flights, starts_with("dep"), contains("time"), year:day)
+
+# this is just the column numbers 
+select(flights, c(1,3,5))
+
+#select columns that are numbered but also have a prefix 
+select(billboard, num_range("wk", 20:23))
+
+
+```
+
+## filter() - selecting observations of variables (rows)
+
+```{r}
+# use
+# & and 
+# | or 
+# ! not 
+```
+
+```{r}
+#filter flights departed on january 1st 
+#all rows (observations) that satisfy the criteria
+filter(flights, month == 1 & day == 1)
+
+#flights that depart on November or December 
+filter(flights, month == 11 | month == 12)
+
+# all flights where the destination is IAH 
+filter(flights, dest == "IAH")
+
+# all flights with arrival delay less than or equal to 2 hours 
+# or departure delay greater than 2 hours 
+
+#only one condition needs to be satisfied to be included
+filter(flights, arr_delay <= 120 | dep_delay > 120)
+```
+
+## mutate() - Create new variables 
+
+```{r}
+# from left to right future variables can use previous ones within the same statement 
+mutate(flights, gain = arr_delay - dep_delay, hours = air_time/60, gain_per_hour = gain/hours)
+
+```
+
+### transmute() 
+
+```{r}
+# same thing as filter but all variables other than the new ones just created will be removed
+transmute(flights, gain = arr_delay - dep_delay, hours = air_time/60, gain_per_hour = gain/hours)
+
+```
+
+### variants of mutate() and transmute()
+
+```{r}
+#mutate_all() and transmute_all() affect every variable
+
+#mutate_at() and transmute_at() affect variables selected with a character vector
+
+#mutate_if() and transmute_if() affect variables selected with a predicate function (a function that returns TRUE or FALSE)
+```
+
+```{r}
+head(iris,5)
+#take the log() of all columns that include "Sepal" in their name and then assaign that to new tibble
+mutated <- mutate_at(iris, vars(contains("Sepal")), log)
+
+#you can specify to apply the function only to columns of specified data type 
+mutated <- mutate_if(iris, is.numeric, log)
+head(mutated)
+
+#transmute would do the exact same thing just removal all other columns other than the ones that were transformed
+
+
+#across() will apply a function to multiple different selection criteria 
+
+```
+
+## arrange() - reorder rows 
+
+```{r}
+#reorder rows by numeric aescending value by default 
+arrange(flights, year, month, day)
+
+#or descending order
+arrange(flights, desc(month))
+```
+
+## summarize() and group_by()
+
+```{r}
+#this will output a tibble with delay_mean which is the mean of the variable 
+# dep_delay aswell output in the tibble delay_sd the standard dev of dep_delay
+flights 
+
+summarize(flights, delay_mean = mean(dep_delay, na.rm = TRUE), delay_sd = sd(dep_delay, na.rm = TRUE))
+```
+
+group_by() and summarize() together
+
+```{r}
+# will produce a group for each unique combination of the variables
+by_day <- group_by(flights, year, month, day)
+
+# takes that tibble of groups and evaluates the mean of variable dep_delay within each group 
+summarize(by_day, delay = mean(dep_delay, na.rm = TRUE))
+
+```
+
+summarize functions
+```{r}
+# mean(), median(), sum(), min(), max(), sd(), var(), ... 
+```
+
+## pipe-line operator %\>%
+
+```{r}
+flights %>% 
+  group_by(dest) %>% 
+    summarize(count = n(), dist = mean(distance, na.rm = TRUE), delay = mean(arr_delay, na.rm = TRUE)) %>%
+      filter(count > 20, dest != "HNL") %>% 
+        ggplot(mapping = aes(x = dist, y = delay)) + 
+          geom_point(aes(size = count), alpha = 1/3) + 
+            geom_smooth(se = FALSE)
+```
+
+## more pipe-lines %\>% 
+
+```{r}
+iris #remember you need to declare it as a tibble 
+as_tibble(iris)
+
+iris_grouped <- group_by(iris, Species) 
+summarise_all(iris_grouped, mean)
+
+#or you can just 
+
+iris %>%
+  group_by(Species) %>%
+    summarise_all(mean)
+    
+#will output a summary of the observation groups where the summary is the mean of all columns within each group that start with Sepal in the variable name 
+iris %>% 
+  group_by(Species) %>%
+    summarise(across(starts_with("Sepal"), mean))
+
+# if you want the output from this for input to the next function in the pipeline to not be subject to previous grouping constraints for whatever reason. 
+iris %>%
+  group_by(Species) %>%
+    summarise(across(starts_with("Sepal"), mean), .groups = "drop")
+
+
+```
+
+```{r}
+library(candisc)
+data(HSB)
+
+# convert data frame to tibble 
+HSB <- as_tibble(HSB)
+HSB
+
+# summary of data types 
+str(HSB)
+
+# the function n() will give you the number of observations of each of the groups passed from the previous function in the pipe-line
+HSB %>%
+  group_by(race) %>%
+    summarise(n=n())
+
+#equivalently 
+
+# count() will tell you how many observations there are of each of the possible unique values within the variable
+HSB %>% 
+  count(race)
+
+# how many observations of each unique combination of variable values 
+HSB %>%
+  count(race, gender)
+
+```
+
+example of filtering and then summarizing
+```{r}
+#means of all of these variables for all students
+HSB %>% 
+  summarise(readm = mean(read), writem = mean(write), mathm = mean(math), ssm = mean(ss))
+
+# for each gender 
+HSB %>% 
+  group_by(gender) %>%
+    summarise(readm = mean(read), writem = mean(write), mathm = mean(math), ssm = mean(ss))
+
+# for each gender and race 
+HSB %>% 
+  group_by(gender,race) %>%
+    summarise(readm = mean(read), writem = mean(write), mathm = mean(math), ssm = mean(ss))
+
+# for each gender evaluate the mean of all numeric variables
+HSB %>% 
+  group_by(gender) %>%
+    summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
+
+# the means of all numeric variables by ses for only asian and hispanic
+HSB %>%
+  filter(race == "hispanic" | race == "asian") %>%
+    group_by(ses) %>%
+      summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
+```
+
+
+13.1.12
+
+```{r}
+
+```
+
