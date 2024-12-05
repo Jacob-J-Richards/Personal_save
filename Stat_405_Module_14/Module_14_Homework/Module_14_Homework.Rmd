@@ -66,42 +66,62 @@ level 10 times. The scores obtained are:
 
 ```{r}
 scores <- read.table(file="scores.txt",header=TRUE)
-scores 
+
+library(tidyverse)
+long <- scores %>%
+            pivot_longer(cols = X1:X10, names_to = "trials", values_to = "scores") %>%
+                select(-trials)
+long$ID <- factor(long$ID, levels = c("Player1","Player2"), labels = c("Player1","Player2"))
+
+write.csv(long, file="long.csv")
 ```
 
 a.  Player 2 insists that he is the better player and suggests to
     compare their mean performance. Use a t-test to test whether there
     is a difference between their mean performance (alpha = 0.05).
 
-    They are both playing the same level, this is paired 2 tailed
-    t-test.
+    We are testing for difference of mean on two separate individuals
+    —\> 2 sample - unpaired - two sided t-test
 
 ```{r}
-transposed_df <- as.data.frame(t(scores), stringsAsFactors = FALSE)
-colnames(transposed_df) <- transposed_df[1, ]
-transposed_df <- transposed_df[-1, ]
-transposed_df$ID <- rownames(transposed_df)
-row.names(transposed_df) <- NULL
-transposed_df$Player1 <- as.numeric(transposed_df$Player1)
-transposed_df$Player2 <- as.numeric(transposed_df$Player2)
-write.csv(transposed_df,file="pairedtest.csv")
+scores <- t(as.matrix(scores))
+colnames(scores) <- scores[1,]
+scores <- as_tibble(scores[-1,])
+library(dplyr)
 
-t.test(transposed_df$Player1, transposed_df$Player2, paired=TRUE)
+scores <- scores %>%
+  mutate(across(everything(), as.numeric))
+
+scores
+
+
+
+shapiro.test(scores$Player1)
+shapiro.test(scores$Player2)
+
+
+t.test(long$scores ~ long$ID)
 ```
 
-P-value is greater than 0.05, fail to reject the null-hypothesis that
-the mean score for both players is equal.
+reject the null hypothesis that the players 2 scores are normally
+distributed, therefore player 1 and 2 could never have equal variances
+
+test for difference of scores --\> two-tailed
+
+test results in a p-value of 0.9738, fail to reject the null hypothesis
+that the difference in means is equal to zero.
 
 b\. Player 1 insists that he is the better player. He proposes to use
 the Wilcoxon rank-sum test for the comparison. What are the results
 (alpha = 0.05)?
 
 ```{r}
-wilcox.test(transposed_df$Player1, transposed_df$Player2, paired=TRUE)
+wilcox.test(long$scores ~ long$ID, alternative = "greater")
 ```
 
-The resulting p-value is greater than 0.05, we therefore fail to reject
-the null hypothesis the true location shift is equal to zero.
+The resulting p-value is less than 0.05, we therefore reject the null
+hypothesis that the true location shift is equal to zero and conclude
+that player 1 is better than player 2.
 
 4.) (Use R)\
 A random sample of 90 adults is classified according to gender and the

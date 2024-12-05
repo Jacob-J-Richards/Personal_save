@@ -89,7 +89,7 @@ filter(flights, dest == "IAH")
 filter(flights, arr_delay <= 120 | dep_delay > 120)
 ```
 
-## mutate() - apply a transformation to a variable or make new one 
+## mutate() - apply a transformation to a variable or make new one
 
 ```{r}
 # from left to right future variables can use previous ones within the same statement 
@@ -208,9 +208,9 @@ iris %>%
 
 ```
 
-```{r}
+```{r,eval=false eval=FALSE, include=FALSE, r,eval=false}
+
 library(candisc)
-data(HSB)
 
 # convert data frame to tibble 
 HSB <- as_tibble(HSB)
@@ -236,7 +236,7 @@ HSB %>%
 
 example of filtering and then summarizing
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 #means of all of these variables for all students
 HSB %>% 
   summarise(readm = mean(read), writem = mean(write), mathm = mean(math), ssm = mean(ss))
@@ -369,7 +369,7 @@ full_join
 full_join(x, y, by = "key")
 ```
 
-## tibble reshape
+## tibble reshape and separate()
 
 ```{r}
 
@@ -492,13 +492,12 @@ table5 %>%
 ## module 13 homework
 
 ```{r}
-setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Final_Exam")
+#setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Final_Exam")
+setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Final_Exam")
 bike <- read.csv(file="Bike_Lanes.csv",header=TRUE)
 road <- read.csv(file="roads.csv",header=TRUE)
 crash <- read.csv(file="crashes.csv",header=TRUE)
 wide <- read.csv(file="Bike_Lanes_Wide.csv",header=TRUE)
-
-
 ```
 
 Reshape wide using pivot_longer. Call this data long. Make the key lanetype, and the value\
@@ -521,9 +520,165 @@ crash2 <- crash %>% mutate(Road = str_replace(Road, "-", " "))
 table(crash2$Road)
 ```
 
-Separate the Road column (using separate) into (type and number) in crash2. Reassign this to\
+Separate the Road column (using separate) into (type and number) in crash2.
+
+Reassign this to\
 crash2. Table crash2\$type. Then create a new variable calling it road_hyphen using the unite\
 function. Unite the type and number columns using a hyphen (-) and then table road_hyphen.
+
+```{r}
+crash2 <- crash2 %>%
+     separate(col=Road, into = c("type", "number"))
+
+table(crash2$type)
+
+crash2 <- crash2 %>%
+          unite(road_hyphen, type, number, sep = "-")
+
+table(crash2$road_hyphen)
+```
+
+Keep rows where the record is not missing type and not missing name and re-assign the output to bike.
+
+```{r}
+#in a tibble empty spaces you can index as (" ") 
+
+
+bike <- bike %>%
+          filter(name != " " & type != " ")
+
+bike <- bike %>%
+          filter(!is.na(name) & !is.na(type))
+
+```
+
+Summarize and group the data by grouping name and type (i.e, for each type within each name) and take the sum of the length (reassign the sum of the lengths to the length variable). Call this data set sub.
+
+```{r}
+sub <- bike %>%
+  group_by(name,type) %>%
+    summarise(length = sum(length)) #mutate cannot change dimensionality of the tibble, summarize will reduce 
+                                    #the tibble to one row for each group 
+sub
+```
+
+Reshape sub using pivot_wider. Spread the data where the key is type and we want the value in the new columns to be length - the bike lane length. Call this wide2. Look at the column names of wide2 - what are they? (they also have spaces).
+
+```{r}
+#pivot_wider(data, names_from, values_from)
+#in her problems when she says "key" she means the variable, the thing we are measuring  
+wide2 <- sub %>%
+            pivot_wider(names_from = type, values_from = length)
+```
+
+Join data to retain only complete data, (using an inner_join) e.g., those observations with road lengths and districts. Merge without using by argument, then merge using by = "Road". call the output merged. How many observations are there?
+
+```{r}
+merged <- inner_join(road,crash)
+merged
+```
+
+```{r}
+full <- full_join(road,crash)
+full
+```
+
+```{r}
+left <- left_join(road,crash)
+left
+```
+
+```{r}
+right <- right_join(road,crash, by="Road") #in case there are more than 1 common variables but you want to use one as the key instead of the other. 
+right
+```
+
+# Module 14
+
+## t-tests, Wilcox - INDEPENDENT LONG DATA - PAIRED WIDE DATA
+
+one sample - two sided
+
+```{r}
+data(trees)
+t.test(trees$Height, mu = 70)
+```
+
+one sample - one sided
+
+```{r}
+t.test(trees$Height, mu = 70,alternative = "greater") # sample is greater than mu
+t.test(trees$Height, mu = 70,alternative = "less")  # sample is less than mu 
+```
+
+change the confidence level on the mean confidence interval
+
+```{r}
+t.test(trees$Height, mu = 70,conf.level = 0.99)
+```
+
+whenever normality cannot be assumed use wilcox rank sum test
+
+the function call is exactly the same as for t-tests
+
+```{r}
+wilcox.test(trees$Height, mu = 70)
+wilcox.test(trees$Height, mu = 70, alternative = "greater") # sample is greater than mu
+wilcox.test(trees$Height, mu = 70, alternative = "less")  # sample is less than mu 
+```
+
+## hypothesis test normality assumption verification
+
+```{r}
+qqnorm(trees$Height)
+qqline(trees$Height, lty = 2)
+```
+
+this looks a little suspicious, lets check the Shapiro test
+
+```{r}
+shapiro.test(trees$Height)
+```
+
+fail to reject the null hypothesis that it's normal.
+
+## two sample t-tests - unpaired - Variance test
+
+H0: the two samples come from distributions with the same mean
+
+Example:
+
+For example, a study was conducted to test whether ‘seeding’ clouds with dimethylsulphate alters the moisture content of clouds. Ten random clouds were ‘seeded’ with a further ten ‘unseeded.’ The dataset can be found in the `atmosphere.txt` data file located in Canvas.
+
+```{r}
+atmos <- read.table(file="atmosphere.txt",header=TRUE)
+atmos
+t.test(atmos$moisture ~ atmos$treatment)
+```
+
+if you happen to be sure that the variances of the samples are equal
+
+```{r}
+t.test(atmos$moisture ~ atmos$treatment, var.equal = TRUE) #so in this context 
+```
+
+to verify assumption that variances are unequal - cannot use this with data that is not normal.
+
+```{r}
+var.test(atmos$moisture ~ atmos$treatment)
+#H0: the varainces are equal, p-value = 0.4282 --> fail to reject null --> the variances are equal 
+```
+
+just the same you can use Wilcox for 2 sample tests for data you cant assume normality on
+
+```{r}
+wilcox.test(atmos$moisture ~ atmos$treatment)
+
+```
+
+## Paired t-tests
+
+Paired data are where there are two measurements on the same experimental unit (individual, site, etc.)
 
 ```{r}
 
