@@ -697,11 +697,11 @@ advertising campaign, counts of those would and would not buy are taken before a
 
 are the proportions significantly different?
 
-|                               |                           |                       |
-|:-------------------------:|:----------------------:|:-------------------:|
-|                               | before = **no treatment** | after = **treatment** |
-|   would buy = **+ outcome**   |            45             |          71           |
-| would not buy = **- outcome** |            35             |          32           |
+|  |  |  |
+|:--:|:--:|:--:|
+|  | before = **no treatment** | after = **treatment** |
+| would buy = **+ outcome** | 45 | 71 |
+| would not buy = **- outcome** | 35 | 32 |
 
 ```{r}
 buy <- c(45,71)                     # creates a vector of positive outcomes

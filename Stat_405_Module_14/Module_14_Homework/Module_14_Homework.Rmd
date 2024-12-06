@@ -1,8 +1,9 @@
 ---
 title: "Untitled"
 output:
-  pdf_document: default
+  word_document: default
   html_document: default
+  pdf_document: default
 date: "2024-12-01"
 editor_options:
   markdown:
@@ -14,10 +15,9 @@ editor_options:
 introductory statistics course. We want to answer 2 questions:
 
 ```{r}
-setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
-#setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+#setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
 HW_6 <- read.csv(file="Homework_6.csv",header=TRUE)
-HW_6
 ```
 
 a.  First, we want to see if there is a difference in the two tests.
@@ -27,21 +27,23 @@ a.  First, we want to see if there is a difference in the two tests.
 t.test(HW_6$Test.1, HW_6$Test.2, paired = TRUE)
 ```
 
-The p-value is less than 0.05, reject the null hypothesis that the means
-of Test 1 and Test 2 are equal. Tentatively conclude that the mean of
-the test scores are different.
+In this paired two-sided t-test, the p-value obtained is 0.04143 which
+is less than 0.05, we therefore reject the null hypothesis that the test
+means are equal and tentatively conclude that the test means were
+different.
 
 b.  Second, we want to see if there was improvement over the course of
-    the semester. H0: Test1 - Test2 \< 0
+    the semester. H0: Test 2 - Test 1 \> 0
 
 ```{r}
-t.test(HW_6$Test.1, HW_6$Test.2, paired = TRUE, alternative = "less")
+t.test(HW_6$Test.2, HW_6$Test.1, paired = TRUE, alternative = "greater")
 ```
 
-Reject the null hypothesis that the mean difference of Test 1 minus Test
-2 is equal to zero. Tentatively conclude that the mean difference of
-test 1 minus test 2 is less than zero, and therefore that the the grades
-of the second test were greater (better) than the first.
+Since the mean difference (Test2 – Test1) is positive, there appears to
+be an increase in test scores from Test 1 to Test 2. From the p-value
+obtained in this test of 0.02072 which is less than alpha=0.05, we
+reject the null hypothesis that this difference is zero and conclude
+that there was improvement over the semester.
 
 2.) (Use R) The data called “plasma” from Anderson et al. (1981)
 consists of measurements of plasma concentrations in micromoles/liter
@@ -53,24 +55,63 @@ plasma <- read.csv(file="plasma.csv",header=TRUE)
 plasma$time <- factor(plasma$time,levels=c("8am", "11am", "2pm", "5pm", "8pm"), 
                       labels = c("8am", "11am", "2pm", "5pm", "8pm"))
 
-plasma
+
 plasma_model <- lm(plasma ~ time, data = plasma)
 anova(plasma_model)
 summary(plasma_model)
+
 ```
 
-The p-value from this test is greater than 0.05, we therefore fail to
-reject the null hypothesis that the difference of the plasma level means
-of the groups are equal to zero.
+The Pr(\>F) p-value obtained in testing the null hypothesis that there
+is no difference in the mean blood plasma levels of subjects at
+different times of the day is 0.1132, which is greater than 0.05. We
+therefore fail to reject the null hypothesis that there is no difference
+in the mean blood plasma levels of subjects at different times of the
+day.
 
-Furthermore, the p-value testing if the mean of the 8am group plasma
-level is equal to zero is significant, we therefore reject the null
-hypothesis that the 8am plasma level mean is equal to zero. The
-remaining t-tests all fail to reject the null hypothesis that the
-difference of their group mean and the 8am group mean is equal to zero.
+The estimated mean blood plasma level of the 8am group from the test
+results was 118.50 micromoles/liter
 
-Therefore, there is insufficient evidence to suggest that blood plasma
-levels are different at different times of day.
+Furthermore, the p-value obtained from testing the null hypothesis that
+the blood plasma level mean of the 8am group is equal to zero was less
+than 0.05, we therefore reject the null hypothesis the blood plasma
+level mean of the 8am group is equal to zero.
+
+The t-tests for the remaining group are testing the null hypothesis that
+the 8am group mean - the group of the row the test corresponds too = 0,
+as illustrated in the following table. All of the t-tests testing the
+H0: 8am group mean - their group mean = 0 produced p-values greater than
+0.05, therefore for all groups we fail to reject the null hypothesis
+that each groups mean is not different from the 8am groups mean and
+therefore conclude that the different groups means are not different
+from each other,
+
++----------------------+----------------------+-----------------------+
+| Group                | H0:                  | P-value               |
++======================+======================+=======================+
+| ```                  | H0: 8am group mean - | ```                   |
+| time11am             | 11 am group mean = 0 | 0.269 > .             |
+| ```                  |                      | 05, fail to reject H0 |
+|                      |                      | ```                   |
++----------------------+----------------------+-----------------------+
+| ```                  | H0: 8am group mean - | ```                   |
+| time2pm              | 2 pm group mean = 0  | 0.831 > .             |
+| ```                  |                      | 05, fail to reject H0 |
+|                      |                      | ```                   |
++----------------------+----------------------+-----------------------+
+| ```                  | H0: 8am group mean - | ```                   |
+| time5pm              | 5 pm group mean = 0  | 0.110  > .            |
+| ```                  |                      | 05, fail to reject H0 |
+|                      |                      | ```                   |
++----------------------+----------------------+-----------------------+
+| ```                  | H0: 8am group mean - | ```                   |
+| time8pm              | 8 pm group mean = 0  | 0.887 > .             |
+| ```                  |                      | 05, fail to reject H0 |
+|                      |                      | ```                   |
++----------------------+----------------------+-----------------------+
+
+finally, therefore we conclude there is not a difference in blood plasma
+levels at different times of the day
 
 3.) Two friends play a computer game and each of them repeats the same
 level 10 times. The scores obtained are:
@@ -104,8 +145,6 @@ library(dplyr)
 scores <- scores %>%
   mutate(across(everything(), as.numeric))
 
-scores
-
 
 shapiro.test(scores$Player1)
 shapiro.test(scores$Player2)
@@ -120,10 +159,11 @@ distributed.
 reject the null hypothesis that the player 2 scores are normally
 distributed, therefore player 1 and 2 could never have equal variances
 
-test results in a p-value of 0.9738, fail to reject the null hypothesis
-that the difference in means is equal to zero. This test fails to
-produce sufficient evidence that the difference of players mean scores
-is not equal to zero.
+two-sample independent t-test for difference of mean results in a
+p-value of 0.9738, fail to reject the null hypothesis that the
+difference in means is equal to zero. This test fails to produce
+sufficient evidence that the difference of players mean scores is not
+equal to zero.
 
 b\. Player 1 insists that he is the better player. He proposes to use
 the Wilcoxon rank-sum test for the comparison. What are the results
@@ -133,9 +173,10 @@ the Wilcoxon rank-sum test for the comparison. What are the results
 wilcox.test(long$scores ~ long$ID, alternative = "greater")
 ```
 
-The resulting p-value is less than 0.05, we therefore reject the null
-hypothesis that the true location shift is equal to zero and conclude
-that player 1 is better than player 2.
+The Wilcox rank sum test having an HA that implies that Player 1 is
+better than Player 2 resulted in a p-value of 0.01875 which is less than
+0.05, we therefore reject the null hypothesis that true location shift
+is equal to 0 and conclude that Player 1 is better than Player 2.
 
 4.) (Use R)\
 A random sample of 90 adults is classified according to gender and the
@@ -179,7 +220,6 @@ variables:
 
 ```{r}
 Movies <- read.csv(file="Movies.csv",header=TRUE)
-Movies
 ```
 
 This problem considers using each of these explanatory variables to
