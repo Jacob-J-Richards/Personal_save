@@ -8,8 +8,9 @@ date: "2024-11-25"
 
 ```{r}
 #setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14")
-setwd("~/Desktop/Personal_save/Stat_405_Module_14")
+setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_14/Lab_14.1")
 test <- read.csv(file="hypothesis.csv",header=TRUE)
+test
 ```
 
 The following table shows the time for subjects to feel relief from headache pain:

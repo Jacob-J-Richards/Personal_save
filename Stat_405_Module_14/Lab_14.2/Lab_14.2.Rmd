@@ -17,6 +17,7 @@ times <- read.csv(file="Game_Times.csv",header=TRUE)
 a. Examine the dataset graphically and draw conclusions.
 ```{r}
 pairs(times[,4:14])
+pairs.panels(times[,8],times[,4:14])
 ```
 You have to open it in another the plot in another window but you can see that Time of game and Pitches appears to have the strongest cooralation. 
 

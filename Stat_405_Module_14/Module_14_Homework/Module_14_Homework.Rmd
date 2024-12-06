@@ -28,7 +28,8 @@ t.test(HW_6$Test.1, HW_6$Test.2, paired = TRUE)
 ```
 
 The p-value is less than 0.05, reject the null hypothesis that the means
-of Test 1 and Test 2 are equal.
+of Test 1 and Test 2 are equal. Tentatively conclude that the mean of
+the test scores are different.
 
 b.  Second, we want to see if there was improvement over the course of
     the semester. H0: Test1 - Test2 \< 0
@@ -55,11 +56,21 @@ plasma$time <- factor(plasma$time,levels=c("8am", "11am", "2pm", "5pm", "8pm"),
 plasma
 plasma_model <- lm(plasma ~ time, data = plasma)
 anova(plasma_model)
+summary(plasma_model)
 ```
 
 The p-value from this test is greater than 0.05, we therefore fail to
-reject the null hypothesis that blood plasma levels are not different at
-different times.
+reject the null hypothesis that the difference of the plasma level means
+of the groups are equal to zero.
+
+Furthermore, the p-value testing if the mean of the 8am group plasma
+level is equal to zero is significant, we therefore reject the null
+hypothesis that the 8am plasma level mean is equal to zero. The
+remaining t-tests all fail to reject the null hypothesis that the
+difference of their group mean and the 8am group mean is equal to zero.
+
+Therefore, there is insufficient evidence to suggest that blood plasma
+levels are different at different times of day.
 
 3.) Two friends play a computer game and each of them repeats the same
 level 10 times. The scores obtained are:
@@ -71,14 +82,15 @@ library(tidyverse)
 long <- scores %>%
             pivot_longer(cols = X1:X10, names_to = "trials", values_to = "scores") %>%
                 select(-trials)
+
 long$ID <- factor(long$ID, levels = c("Player1","Player2"), labels = c("Player1","Player2"))
 
 write.csv(long, file="long.csv")
 ```
 
 a.  Player 2 insists that he is the better player and suggests to
-    compare their mean performance. Use a t-test to test whether there
-    is a difference between their mean performance (alpha = 0.05).
+    compare their mean performance. **Use a t-test to test whether there
+    is a difference between their mean performance (alpha = 0.05).**
 
     We are testing for difference of mean on two separate individuals
     —\> 2 sample - unpaired - two sided t-test
@@ -95,21 +107,23 @@ scores <- scores %>%
 scores
 
 
-
 shapiro.test(scores$Player1)
 shapiro.test(scores$Player2)
 
 
-t.test(long$scores ~ long$ID)
+t.test(long$scores ~ long$ID, var.equal=FALSE)
 ```
 
-reject the null hypothesis that the players 2 scores are normally
+fail to reject the null hypothesis that the player 1 scores are normally
+distributed.
+
+reject the null hypothesis that the player 2 scores are normally
 distributed, therefore player 1 and 2 could never have equal variances
 
-test for difference of scores --\> two-tailed
-
 test results in a p-value of 0.9738, fail to reject the null hypothesis
-that the difference in means is equal to zero.
+that the difference in means is equal to zero. This test fails to
+produce sufficient evidence that the difference of players mean scores
+is not equal to zero.
 
 b\. Player 1 insists that he is the better player. He proposes to use
 the Wilcoxon rank-sum test for the comparison. What are the results
@@ -279,6 +293,12 @@ The y-intercept in this model is not meaningful as it's p-value from
 testing the null hypothesis that the intercept is equal to zero is
 greater than 0.05 and thus the null hypothesis that the true y-intercept
 is zero fails to be rejected.
+
+Also,
+
+The y-intercept: -6.9619 would imply negative revenue when Opening is 0,
+which is nonsensical in this context of producing a model for US
+Revenue.
 
 \
 i. State r-squared (i.e., the coefficient of determination) and explain
