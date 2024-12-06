@@ -151,10 +151,10 @@ of whether the viewer is male or female.
 table <- matrix(data=c(15,29,27,19),nrow=2,ncol=2,byrow=TRUE,dimnames = list(c("Over 25 hours", "Under 25 hours"),c("Male", "Female")))
 table <- t(table)
 table
-chisq.test(table)
+chisq.test(table, correct = FALSE)
 ```
 
-The p-value obtained is 0.03338 which is greater than 0.01, we therefore
+The p-value obtained is 0.01934 which is greater than 0.01, we therefore
 fail to reject the null hypothesis that time spent watching television
 is independent of whether the viewer is male or female.
 
