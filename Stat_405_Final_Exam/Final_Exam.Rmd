@@ -691,17 +691,17 @@ wilcox.test(pollution$down, pollution$up, paired = TRUE)
 
 ## Prop test and chisq test
 
-### prop test 
+### prop test
 
 advertising campaign, counts of those would and would not buy are taken before and after
 
 are the proportions significantly different?
 
-|                                |                            |                         |
-|:------------------------------:|:--------------------------:|:-----------------------:|
-|                                | before = **no treatment**  |  after = **treatment**  |
-|   would buy = **+ outcome**    |             45             |           71            |
-| would not buy = **- outcome**  |             35             |           32            |
+|                               |                           |                       |
+|:-------------------------:|:----------------------:|:-------------------:|
+|                               | before = **no treatment** | after = **treatment** |
+|   would buy = **+ outcome**   |            45             |          71           |
+| would not buy = **- outcome** |            35             |          32           |
 
 ```{r}
 buy <- c(45,71)                     # creates a vector of positive outcomes
@@ -718,7 +718,7 @@ chisq.test(buyers)
 
 14.2
 
-## correlation 
+## correlation
 
 Pearson’s product-moment correlation coefficient between two continuous variables is the default correlation coefficient in the function
 
@@ -747,6 +747,18 @@ cor.test(trees$Height, trees$Volume, method = "kendall")
 
 14.3
 
-```{r}
+```{r eval=FALSE, include=FALSE}
+
+Bivariate regression	    Y ~ X (continuous)	                lm(Y ~ X) #regular linear regression
+
+One-way ANOVA	            Y ~ X (categorical)	                lm(Y ~ X) #difference between group means 
+
+Two-way ANOVA	            Y ~ X1 (cat) + X2(cat)            	lm(Y ~ X1 + X2) 
+
+ANCOVA	                  Y ~ X1 (cat) + X2(cont)           	lm(Y ~ X1 + X2)
+
+Multiple regression     	Y ~ X1 (cont) + X2(cont)          	lm(Y ~ X1 + X2)
+
+Factorial ANOVA	          Y ~ X1 (cat) * X2(cat)	            lm(Y ~ X1 * X2) or lm(Y ~ X1 + X2 + X1:X2)
 
 ```
