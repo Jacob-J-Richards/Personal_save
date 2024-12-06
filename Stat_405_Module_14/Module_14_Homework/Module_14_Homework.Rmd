@@ -1,9 +1,9 @@
 ---
 title: "Untitled"
 output:
-  word_document: default
-  html_document: default
   pdf_document: default
+  html_document: default
+  word_document: default
 date: "2024-12-01"
 editor_options:
   markdown:
@@ -15,8 +15,8 @@ editor_options:
 introductory statistics course. We want to answer 2 questions:
 
 ```{r}
-#setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
-setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+#setwd("C:/Users/jake pc/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
 HW_6 <- read.csv(file="Homework_6.csv",header=TRUE)
 ```
 
@@ -86,29 +86,25 @@ that each groups mean is not different from the 8am groups mean and
 therefore conclude that the different groups means are not different
 from each other,
 
-+----------------------+----------------------+-----------------------+
-| Group                | H0:                  | P-value               |
-+======================+======================+=======================+
-| ```                  | H0: 8am group mean - | ```                   |
-| time11am             | 11 am group mean = 0 | 0.269 > .             |
-| ```                  |                      | 05, fail to reject H0 |
-|                      |                      | ```                   |
-+----------------------+----------------------+-----------------------+
-| ```                  | H0: 8am group mean - | ```                   |
-| time2pm              | 2 pm group mean = 0  | 0.831 > .             |
-| ```                  |                      | 05, fail to reject H0 |
-|                      |                      | ```                   |
-+----------------------+----------------------+-----------------------+
-| ```                  | H0: 8am group mean - | ```                   |
-| time5pm              | 5 pm group mean = 0  | 0.110  > .            |
-| ```                  |                      | 05, fail to reject H0 |
-|                      |                      | ```                   |
-+----------------------+----------------------+-----------------------+
-| ```                  | H0: 8am group mean - | ```                   |
-| time8pm              | 8 pm group mean = 0  | 0.887 > .             |
-| ```                  |                      | 05, fail to reject H0 |
-|                      |                      | ```                   |
-+----------------------+----------------------+-----------------------+
++-----------+-----------------------+------------------------------------------+
+| Group     | H0:                   | P-value                                  |
++===========+=======================+==========================================+
+| time11am  | H0: 8am group mean -  | ```                                      |
+|           | 11 am group mean = 0  | 0.269 > .05, fail to reject H0           |
+|           |                       | ```                                      |
++-----------+-----------------------+------------------------------------------+
+| time2pm   | H0: 8am group mean -  | ```                                      |
+|           | 2 pm group mean = 0   | 0.831 > .05, fail to reject H0           |
+|           |                       | ```                                      |
++-----------+-----------------------+------------------------------------------+
+| time5pm   | H0: 8am group mean -  | ```                                      |
+|           | 5 pm group mean = 0   | 0.110  > .05, fail to reject H0          |
+|           |                       | ```                                      |
++-----------+-----------------------+------------------------------------------+
+| time8pm   | H0: 8am group mean -  | ```                                      |
+|           | 8 pm group mean = 0   | 0.887 > .05, fail to reject H0           |
+|           |                       | ```                                      |
++-----------+-----------------------+------------------------------------------+
 
 finally, therefore we conclude there is not a difference in blood plasma
 levels at different times of the day
@@ -329,25 +325,25 @@ increase by 3.277 million.
 \
 h. Is it meaningful to interpret the y-intercept? Why or why not?
 
+The y-intercept: -6.9619 would imply negative revenue when Opening is 0,
+which is nonsensical in this context of producing a model for US
+Revenue.
+
+Also,
+
 The y-intercept in this model is not meaningful as it's p-value from
 testing the null hypothesis that the intercept is equal to zero is
 greater than 0.05 and thus the null hypothesis that the true y-intercept
 is zero fails to be rejected.
 
-Also,
-
-The y-intercept: -6.9619 would imply negative revenue when Opening is 0,
-which is nonsensical in this context of producing a model for US
-Revenue.
-
 \
 i. State r-squared (i.e., the coefficient of determination) and explain
 what this value means (in context of\
-the data set).
-
-The R-squared of the model is .9683 which means that about 97% of the
-variance of the response variable US Revenue is explained by the value
-of the Predictor variable opening.
+the data set). The R-squared of the model is .9683 which means that
+about 97% of the variance of the response variable US Revenue is
+explained by the value of the Predictor variable opening. This means
+that opening weekend revenue is a very very strong indicator of US
+Revenue.
 
 \
 j. Use the regression equation from part (f) to predict the total US
