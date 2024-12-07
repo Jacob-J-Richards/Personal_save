@@ -6,6 +6,106 @@ date: "2024-12-03"
 
 # Module 3 
 
+## reading in txt and setting variables manually
+```{r}
+data adults;
+infile '/home/u63989204/Module 3/Module_3_labs/adults(1).txt' firstobs=2; #starts read at second line of file
+input weight bloodp; 
+run;
+
+proc print data=adults; 
+```
+
+### delimeter option for txt file read in 
+```{r, eval=FALSE}
+DATA HW4_2;
+Infile '/home/u63989204/Module 4/Module_4_Homework/exchange rates.csv' DLM=',' FIRSTOBS=2;
+Input Date : MMDDYY10. USD JPY EUR GBP AUD BRL CAD CNY DKK
+HKD INR MYR MXN NOK NZD KRW SEK SGD LKR ZAR TWD THB;
+Year=Year(Date);
+run;
+
+PROC Means data=HW4_2;
+BY Year;
+output out=AVG mean=; #prevents any other statistics from being calculated;
+run;
+```
+
+## reading in data from spreadsheet 
+```{r, eval=FALSE}
+proc import datafile = "/home/u63989204/Midterm 1/Module 3/Module_3_labs/Game_Times (1).xlsx" 
+DBMS=XLSX  
+out = imported_data_sheet replace;  
+getnames=yes;  
+options validvarname=v7;  
+run;
+
+proc sort data=imported_data_sheet; 
+by descending Time_of_Game;
+
+
+proc print data=imported_data_sheet (obs=1);  
+format Date worddate.14;
+var Date HomeTeam AwayTeam Time_of_Game; 
+```
+
+## reading in data from csv
+```{r, eval=FALSE}
+PROC IMPORT DATAFILE='/home/u63989204/Midterm 1/Module 4/Module_4_Homework/NBAPPG2008.csv'
+ OUT=NBA
+ DBMS=CSV REPLACE;
+ getnames=yes;  
+ options validvarname=v7;
+run;
+ 
+proc univariate data=NBA normaltest;
+var G MIN PTS FGM FGA FGP FTM FTA FTP _3PM _3PA _3PP ORB DRB TRB AST STL BLK TO PF;
+ods output TestsForNormality=normaltest;
+run;
+```
+
+## programming lag (like diff() in R)
+
+```{r, eval=FALSE}
+
+DATA PATIENTS;
+   INPUT @1  ID          $3.
+         @4  DATE   MMDDYY8.
+         @12 HR           3.
+         @15 SBP          3.
+         @18 DBP          3.
+         @21 DX           3.
+         @24 DOCFEE       4.
+         @28 LABFEE       4.;
+   FORMAT DATE MMDDYY10.;
+DATALINES;
+0071021198307012008001400400150
+0071201198307213009002000500200
+0090903198306611007013700300000
+0050705198307414008201300900000
+0050115198208018009601402001500
+0050618198207017008401400800400
+0050703198306414008401400800200
+;
+
+PROC SORT DATA=PATIENTS;
+   BY ID DATE;   #Sort the data set in patient-date order
+RUN;
+
+DATA DIFFERENCE;
+   SET PATIENTS;
+   BY ID;
+   DIFF_HR = HR - LAG(HR); 
+   DIFF_SBP = SBP - LAG(SBP);
+   DIFF_DBP = DBP - LAG(DBP);
+
+   IF NOT FIRST.ID THEN OUTPUT; 
+RUN;
+
+PROC PRINT DATA = DIFFERENCE; 
+RUN;
+```
+
 # Module 4 
 
 ## means table, evaluating mean of variable by numerical value category
