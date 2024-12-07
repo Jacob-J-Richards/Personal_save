@@ -16,9 +16,14 @@ times <- read.csv(file="Game_Times.csv",header=TRUE)
 
 a. Examine the dataset graphically and draw conclusions.
 ```{r}
-pairs(times[,4:14])
-pairs.panels(times[,8],times[,4:14])
+pairs(times[,c(4,5,6,11)])
+pairs(times[,c(7,8,9,11)])
+pairs(times[,c(10,12,13,11)])
+pairs(times[,c(14,11)])
+
+#variable on the row is on the y-axis, so if we want to see what variable has the greatest effect on time of game, we would look at the bottom row of each of these plots 
 ```
+
 You have to open it in another the plot in another window but you can see that Time of game and Pitches appears to have the strongest cooralation. 
 
 b. Examine the dataset numerically and draw conclusions.

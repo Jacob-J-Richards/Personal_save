@@ -697,11 +697,11 @@ advertising campaign, counts of those would and would not buy are taken before a
 
 are the proportions significantly different?
 
-|  |  |  |
-|:--:|:--:|:--:|
-|  | before = **no treatment** | after = **treatment** |
-| would buy = **+ outcome** | 45 | 71 |
-| would not buy = **- outcome** | 35 | 32 |
+|                               |                           |                       |
+|:-----------------------------:|:-------------------------:|:---------------------:|
+|                               | before = **no treatment** | after = **treatment** |
+|   would buy = **+ outcome**   |            45             |          71           |
+| would not buy = **- outcome** |            35             |          32           |
 
 ```{r}
 buy <- c(45,71)                     # creates a vector of positive outcomes
@@ -718,7 +718,7 @@ chisq.test(buyers)
 
 14.2
 
-## correlation
+## correlation coeficients and plots 
 
 Pearson’s product-moment correlation coefficient between two continuous variables is the default correlation coefficient in the function
 
@@ -730,6 +730,18 @@ cor(trees$Height, trees$Volume) #select specific variables
 cor(trees) #or produce a matrix of the coef's 
 
 cor(trees, use = "complete.obs") #if theres is an NA 
+
+
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Lab_14.2")
+times <- read.csv(file="Game_Times.csv",header=TRUE)
+
+# when you need to plot it 
+pairs(times[,c(4,5,6,11)])
+pairs(times[,c(7,8,9,11)])
+pairs(times[,c(10,12,13,11)])
+pairs(times[,c(14,11)])
+
+cor(times[,4:14]) #or can just do this and then check that there is actually a linear relationship between the variables
 ```
 
 to test if these correlation coefficients are statistically significant you need to use.
@@ -763,16 +775,109 @@ Factorial ANOVA	          Y ~ X1 (cat) * X2(cat)	            lm(Y ~ X1 * X2) or 
 
 ```
 
-regular regression
+## linear regression
 
+produce model
 ```{r}
-smoke <- read.table(file="smoking.txt",header=TRUE)
+smoke <- read.table(file="smoking.txt",header=TRUE) 
 smoke_lm <- lm(mortality ~ smoking,data=smoke)
 summary(smoke_lm)
-
-#this is a condensed form of an anova table 
-anova(smoke_lm)
 ```
+
+plot with data and correlation coefficient 
+```{r}
+slope_intercept <- coefficients(smoke_lm)
+plot(mortality ~ smoking,data=smoke)
+abline(a=slope_intercept[1],slope_intercept[2])
+cor(y=smoke$mortality, x=smoke$smoking)
+```
+
+summary of model
+```{r}
+summary(smoke_lm) #check for significance of coeficient's 
+anova(smoke_lm) #this is a condensed form of an anova table, signifigant p-value of F statistic - model is signifigant
+```
+
+### prediction and confidence interval
+
+```{r}
+predicted_smoke_120 <- predict(smoke_lm, newdata = data.frame(smoking = 120))
+predicted_smoke_120
+
+CI_predicted_smoke_120 <- predict(smoke_lm, newdata = data.frame(smoking = 120), interval = "confidence", level = 0.98)
+CI_predicted_smoke_120
+```
+
+**Plot the model**
+
+```{r}
+ggplot(mapping = aes(x = smoking, y = mortality), data = smoke) + geom_point() + geom_smooth(method = "lm", se = TRUE)
+```
+
+**1.) residuals by the response values produced by the model (fitted values)**
+
+```{r}
+smoke_res <- resid(smoke_lm) 
+smoke_fit <- fitted(smoke_lm) # this will extract the response values produced by the model
+
+ggplot(mapping = aes(x = smoke_fit, y = smoke_res)) +
+    geom_point() +
+    geom_hline(yintercept = 0, colour = "red", linetype = "dashed")
+```
+
+**2.) residuals by known predictor values**
+
+```{r}
+ggplot(mapping = aes(x = smoke$smoking, y = smoke_res)) +
+    geom_point() +
+    geom_hline(yintercept = 0, colour = "red", linetype = "dashed")
+```
+
+No patterns, looks randomly and and evenly distributed. **check**
+
+**3.) normality of residuals**
+
+```{r}
+qqnorm(smoke_res)
+qqline(smoke_res) 
+```
+
+**4.) Studentized Residuals vs. Predictor observation number**
+
+```{r}
+plot(rstudent(smoke_lm) ~ seq(1,length(smoke$smoking),by=1))
+```
+
+more diagnostic plots
+
+```{r}
+par(mfrow = c(2,2))
+plot(smoke_lm)
+```
+
+the first 2 are same as before
+
+bottom left is first one but by a different scale
+
+bottom right plots the points which have the greatest impact on the linear models coefficients
+
+We may see that there is an extreme outlier point that weakens out model for the normal range of values that we would like to predict, it would benefit our model to just remove the point from the data points we produce the model from
+
+```{r}
+library(ggfortify)
+autoplot(smoke_lm, which = 1:6, ncol = 2, label.size = 3)
+```
+
+in the bottom right plot, the y axis cooks distance is the influence the point has on the model, the leverage is how far the value is away the mean of the predictor
+
+so this one is probably hurting the model because it's far outside the data center (less accurate) and has high impact
+
+```{r}
+smoke_lm2 <- update(smoke_lm, subset = -2)
+summary(smoke_lm2)
+```
+
+## anova
 
 linear model with categorical variable as predictor will compute anova test
 
@@ -823,75 +928,4 @@ risk.groupmedium   -27.55       6.90  -3.992 0.000615 *** # risk.groupmedium - r
   0.000615 *** # this is testing  H0: abs(risk.groupmedium - risk.grouphigh) = 0 , 2 sided --> reject h0: they are different
   
 
-```
-
-Verification of the model plots.
-
-```{r}
-ggplot(mapping = aes(x = smoking, y = mortality), data = smoke) +
-    geom_point() +
-    geom_smooth(method = "lm", se = TRUE)
-```
-
-1.) residuals by the response values produced by the model (fitted values)
-
-```{r}
-smoke_res <- resid(smoke_lm) 
-smoke_fit <- fitted(smoke_lm) # this will extract the response values produced by the model
-
-ggplot(mapping = aes(x = smoke_fit, y = smoke_res)) +
-    geom_point() +
-    geom_hline(yintercept = 0, colour = "red", linetype = "dashed")
-```
-
-2.) residuals of known predictor values
-
-```{r}
-ggplot(mapping = aes(x = smoke$smoking, y = smoke_res)) +
-    geom_point() +
-    geom_hline(yintercept = 0, colour = "red", linetype = "dashed")
-```
-
-No patterns, looks randomly and and evenly distributed. **check**
-
-3.) normality of residuals
-
-```{r}
-qqnorm(smoke_res)
-qqline(smoke_res) 
-```
-
-4.) Studentized Residuals vs. Predictor observation number
-
-```{r}
-plot(rstudent(smoke_lm) ~ seq(1,length(smoke$smoking),by=1))
-```
-
-more diagnostic plots
-
-```{r}
-par(mfrow = c(2,2))
-plot(smoke_lm)
-```
-
-the first 2 are same as before
-
-bottom left is first one but by a different scale
-
-bottom right plots the points which have the greatest impact on the linear models coefficients
-
-We may see that there is an extreme outlier point that weakens out model for the normal range of values that we would like to predict, it would benefit our model to just remove the point from the data points we produce the model from
-
-```{r}
-library(ggfortify)
-autoplot(smoke_lm, which = 1:6, ncol = 2, label.size = 3)
-```
-
-in the bottom right plot, the y axis cooks distance is the influence the point has on the model, the leverage is how far the value is away the mean of the predictor
-
-so this one is probably hurting the model because it's far outside the data center (less accurate) and has high impact
-
-```{r}
-smoke_lm2 <- update(smoke_lm, subset = -2)
-summary(smoke_lm2)
 ```
