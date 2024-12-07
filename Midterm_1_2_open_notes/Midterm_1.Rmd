@@ -100,9 +100,6 @@ VAR SSN Score_1-Score_8 score_9 score_10;
 RUN; 
 ```
 
-the 2. after score_1-score_8 is only have the last input variable have the 2. 
-stopping condition 
-
 then because of the missover it reads a blank for the missing score
 when the score 10 was formatted as list input
  

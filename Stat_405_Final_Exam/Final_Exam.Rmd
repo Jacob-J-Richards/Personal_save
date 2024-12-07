@@ -329,15 +329,18 @@ RUN;
 ## means table, evaluating mean of variable by numerical value category
 
 ```{r, eval=FALSE}
+DATA HW4_2;
 Infile '/home/u63989204/Module 4/Module_4_Homework/exchange rates.csv' DLM=',' FIRSTOBS=2;
 Input Date : MMDDYY10. USD JPY EUR GBP AUD BRL CAD CNY DKK
 HKD INR MYR MXN NOK NZD KRW SEK SGD LKR ZAR TWD THB;
 Year=Year(Date);
 run;
+
 PROC Means data=HW4_2;
 BY Year;
 output out=AVG mean=; #prevents any other statistics from being calculated;
 run;
+
 proc print data=AVG;
 var year USD JPY EUR GBP AUD BRL CAD CNY DKK HKD INR
 MYR MXN NOK NZD KRW SEK SGD LKR ZAR TWD THB;
@@ -605,6 +608,7 @@ RUN;
 first check if the odds ratio for the stratification categories are significantly different
 
 ```{r,eval=FALSE}
+
 Breslow-Day Test for Homogeneity of Odds Ratios
 Statistic         Value
 Chi-Square        0.1501
@@ -628,7 +632,7 @@ Statistic                         Alternative Hypothesis         DF    Value    
 
 ```
 
-reject null —\> the odds ratio for both categories is not 1.
+reject null —-> the odds ratio for both categories is not 1.
 
 check the value of the common odds ratio
 
@@ -693,29 +697,37 @@ data structure:
 predictor_1       responce_2
 predictor_2       responce_1
 ....
+
+
 ```
 
 if given the raw data, use proc freq to find the frequencies of the variable category occurrences and run the chi square from that
-
 ```{r,eval=FALSE}
-proc import datafile="/home/u63989204/Module 5/Module_5_Homework/Homework 5 data.xlsx"
+proc import datafile="/home/u63989204/Midterm 1/Module 5/Module_5_Homework/Homework 5 data.xlsx"
 dbms=xlsx 
-out = work.hw_five replace;
+out = hw_five replace;
 getnames=yes;
 option validvarname=v7;
 run;
 
-proc contents data=work.hw_five; 
-run;  
-
-data opinion;
-set work.hw_five;
-run;
-
-proc freq data=opinion;
-    tables GL*opinion/all; 
+proc freq data=hw_five;
+    tables GL*opinion/all;
 run;
 ```
+
+or just convert it to cvs 
+```{r, eval=FALSE}
+DATA CLIMATE;
+INFILE 'your file location/Homework 5 data.csv' DLM = ',' FIRSTOBS=2;
+INPUT GL $ OPINION $;
+RUN;
+
+PROC FREQ DATA=CLIMATE;
+TITLE "Relationship between grade level and opinion";
+TABLES GL*OPINION/CHISQ;
+RUN;
+```
+
 
 ## chi square for trend
 
@@ -2738,7 +2750,6 @@ plasma <- read.csv(file="plasma.csv",header=TRUE)
 plasma$time <- factor(plasma$time,levels=c("8am", "11am", "2pm", "5pm", "8pm"), 
                       labels = c("8am", "11am", "2pm", "5pm", "8pm"))
 plasma_model <- lm(plasma ~ time, data = plasma)
-
 ```
 
 ```{r}
