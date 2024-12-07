@@ -231,7 +231,7 @@ run;
 proc print data=adults; 
 ```
 
-### delimeter option for txt file read in
+### data delimeter and line of first observation option
 
 ```{r, eval=FALSE}
 DATA HW4_2;
