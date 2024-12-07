@@ -949,6 +949,8 @@ s + geom_bar(position = "fill") #purely demon straights the proportion of the st
 ## box plot - violin plot - violin/box - Ridgeline - pie chart
 
 ```{r}
+library(ggplot2)
+data(iris)
 ggplot(data = iris, aes(x = Species, y = Petal.Length, fill = Species)) + 
   geom_boxplot(position = "dodge") + 
   labs(y = "Petal Length", title = "Box Plot") 
@@ -986,7 +988,8 @@ ggplot(species_counts, aes(x = "", y = -Count, fill = Species)) +
 
 produce separate plot in the same panel specifying rows or columns to orient separate plots by category
 
-```{r,eval=FALSE}
+```{r}
+library(ggplot2)
 ggplot(data = diamonds, aes(x = carat)) + geom_histogram(bins=30) + facet_grid(rows = vars(color)) #another row for each color 
 
  diamonds
@@ -999,7 +1002,8 @@ ggplot(data = diamonds, aes(x = carat)) + geom_histogram(bins=30) + facet_grid(r
 facet_grid(cols = vars(Species), scales="free")
 
 #FOR FACET GRID, SCALES = FREE will completely decouple the facets scales from each other and each scale will fit only that individual facet. 
-Oxboys
+library(nlme)
+data(Oxboys)
 #wrap will just make a new plot for each category and will wrap them like text to save space, it's just a list there isn't a dimensional
 #it automatically printed them in order of trend line least to greatest
 ggplot(Oxboys, aes(age, height)) + geom_line() + facet_wrap(vars(Subject))
