@@ -4,6 +4,738 @@ output: html_document
 date: "2024-12-03"
 ---
 
+# Module 3 
+
+# Module 4 
+
+## means table, evaluating mean of variable by numerical value category
+
+```{r}
+Infile '/home/u63989204/Module 4/Module_4_Homework/exchange rates.csv' DLM=',' FIRSTOBS=2;
+Input Date : MMDDYY10. USD JPY EUR GBP AUD BRL CAD CNY DKK
+HKD INR MYR MXN NOK NZD KRW SEK SGD LKR ZAR TWD THB;
+Year=Year(Date);
+run;
+PROC Means data=HW4_2;
+BY Year;
+output out=AVG mean=; #prevents any other statistics from being calculated;
+run;
+proc print data=AVG;
+var year USD JPY EUR GBP AUD BRL CAD CNY DKK HKD INR
+MYR MXN NOK NZD KRW SEK SGD LKR ZAR TWD THB;
+run;
+```
+
+## normality test, inputted data 
+
+```{r}
+data test_one;
+input score;
+datalines;
+82
+91
+100
+68
+87
+73
+78
+80
+65
+84
+116
+76
+97
+100
+105
+77
+;
+
+proc univariate data=test_one normal;
+var score;
+run;
+
+##for all 4 normality tests, the p-value is above 0.05 and we therefore fail
+#to reject the null hypothesis that the data set is normally distributed;
+```
+
+Null hypothesis: variable is normally distributed —-\> (p-value \< 0.05) —\> reject null hypothesis —\> variable is not normally distributed.
+
+## Normality test - csv read in 
+
+```{r}
+PROC IMPORT DATAFILE='/home/u63989204/Module 4/Module_4_Homework/NBAPPG2008.csv'
+ OUT=NBA
+ DBMS=CSV REPLACE;
+ getnames=yes;  
+ options validvarname=v7;
+run;
+
+#Test for normality;
+proc univariate data=NBA normaltest;
+var G MIN PTS FGM FGA FGP FTM FTA FTP _3PM _3PA _3PP ORB DRB TRB AST STL BLK TO PF;
+ods output TestsForNormality=normaltest;
+run;
+
+#create 0/1 variable for rejection of hypothesis;
+data normaltest;
+set normaltest;
+reject=(pValue<0.05);
+run;
+
+proc print data = normaltest;
+where reject=0;
+run;
+```
+
+scroll all the way down to the table of the variable table, reject = 0 (fail to reject) —-\> normally distributed
+
+Null hypothesis: variable is normally distributed —\> (p-value \< 0.05) —\> reject null hypothesis —\> variable is not normally distributed.
+
+```{r}
+proc univariate data=NBA Normal;
+var _3PM _3PA DRB;
+run;
+```
+
+these variables have at least one test with a p-value less than 0.05 —\> reject null hypothesis —\> variables are not normally distributed
+
+# Module 5 - SAS
+
+## odds ratio
+
+CASE VS CONTROL
+
+both cause and effect already occurred independently, now we are just analyzing what happened.
+
+Question: Is there evidence that the results of the entrance exam are related to race? Analysis: Perform a statistical test of association between row and column variables. Null Hypothesis: Exam results and race of examinee are independent. Alternative Hypothesis: Exam results and race of examinee are not independent.
+
+the first row and the first column are the exposure and outcome categories we are testing for association.
+
+```{r,eval=FALSE}
+data entrance_exam;
+input race $ RESULTS $ count;
+datalines;
+2-white PASS  5
+2-white FAIL 3
+1-other PASS 4
+1-other FAIL 6
+;
+
+PROC FREQ DATA=entrance_exam;
+     TITLE "Mantel-Haenszel Chi-square Test";
+     TABLES race*RESULTS/all; /#ALL option use with the TABLES statement 
+#requests tests and measures of association produced by CHISQ, MEASURES, and CMH options#/
+  WEIGHT count;
+RUN;
+
+```
+
+1.) check Chi-square for overall association between predictor and response
+
++--------------------------------------------------------+--------+-----------+----------+
+| **Statistic**                                          | **DF** | **Value** | **Prob** |
++:=======================================================+=======:+==========:+=========:+
+| **WARNING: 50% of the cells have expected counts less\ |        |           |          |
+| than 5. Chi-Square may not be a valid test.**          |        |           |          |
++--------------------------------------------------------+--------+-----------+----------+
+| **Chi-Square**                                         | 1      | 0.9000    | 0.3428   |
++--------------------------------------------------------+--------+-----------+----------+
+
+p-value = 0.34 —\> fail to reject null that the variables are independent
+
+2.) check odds ratio and confidence interval for odds ratio
+
+| **Common Odds Ratio and Relative Risks** |
+|:----------------------------------------:|
+|              **Statistic**               |
+|              **Odds Ratio**              |
+
+odds ratio contains 1 within it's upper and lower bounds —\> odds ratio is not greater than 1 with 95% confidence —\> fail to reject null hypothesis that the variables are independent.
+
+## odds ratio with set confidence level
+
+(Use SAS) A random sample of 90 adults is classified according to gender and the number of hours of television watched during a week: Use a 0.01 level of significance and test the hypothesis that the time spent watching television is independent of whether the viewer is male or female.
+
+```{r,eval=FALSE}
+data tv;
+input gender $ GT_or_LT $ count; 
+datalines; 
+2-M 1-More 15   # we think that it will be higher for females so we put a 1 in front of the variable so that it will print in the first
+2-M 2-Less 27   # row of the contigency table and align with the first column 1-More
+1-F 1-More 29
+1-F 2-Less 19
+;
+
+PROC FREQ DATA=tv; 
+    TITLE "Jacob Richards - Mantel-Haenszel Chi-square Test with Odds Ratio"; 
+    TABLES gender*GT_or_LT / CHISQ CMH OR CL ALPHA=0.01;  
+    WEIGHT count;
+RUN;
+```
+
+| **Statistic**  | **DF** | **Value** | **Prob** |
+|:---------------|-------:|----------:|---------:|
+| **Chi-Square** |      1 |    5.4702 |   0.0193 |
+
+fail to reject the null hypothesis that the variables are independent
+
+| **Odds Ratio and Relative Risks** |
+|:---------------------------------:|
+|           **Statistic**           |
+|          **Odds Ratio**           |
+
+odds ratio confidence interval at alpha = 0.01 contains zero —\> cannot say that odds ratio does not equal zero —\> fail to reject null that variables are independent.
+
+## Risk Ratio
+
+*A randomized clinical trial compared aspirin to placebo for the prevention of heart attacks (Mis) and strokes. Out of a total of 1,000 subjects on aspirin, there were 80 heart attacks and 65 strokes;* out of a total of 2,000 subjects on placebo, there were 240 heart attacks and 165 strokes. is there a significant benefit for aspirin therapy for heart attacks and strokes? What is the RR for aspirin use for each of these two outcomes? (Careful here, you are given the total number of subjects in each group and the number of complications.);
+
+rather than analyse the relative risk of having a heart complications or not analyse the risk ratio of treatment (yes or no) to having a heart attack (Y/N) and risk ratio of treatment (yes or no) to having a stroke (Y/N)
+
+HEART ATTACK RR EVALUATION
+
+```{r,eval=FALSE}
+DATA heart_attacks;
+	INPUT treatment $ heart_attack $ COUNT;
+	DATALINES;
+asprin YES 80 
+asprin NO 920
+placebo YES 240
+placebo NO 1760
+;
+
+PROC FREQ DATA=heart_attacks;
+	TITLE "realtive risk: treatment on heart attacks";
+	TABLES treatment*heart_attack /CMH;
+	WEIGHT COUNT;
+RUN;
+```
+
+| **Table of treatment by heart_attack** |
+|:--------------------------------------:|
+|             **treatment**              |
+|                 **NO**                 |
+|               **asprin**               |
+|              **placebo**               |
+|               **Total**                |
+
+HEART ATTACKS - results
+
+| **Common Odds Ratio and Relative Risks** |
+|:----------------------------------------:|
+|              **Statistic**               |
+|              **Odds Ratio**              |
+|                                          |
+|       **Relative Risk (Column 1)**       |
+|                                          |
+|       **Relative Risk (Column 2)**       |
+|                                          |
+
+Column 1 given you are in row 1 (Asprin) your risk of not having a heart attack is greater than 1 for both upper and lower bounds
+
+Column 2 given you are in row 1 (Asprin) your risk of having a heart attack is less than 1 for both upper and lower bounds
+
+Therefore, there is a signifigant benefit of asprin thearapy for heart attacks
+
+STROKES – RESULTS
+
+| **Table of treatment by strokes** |
+|:---------------------------------:|
+|           **treatment**           |
+|              **NO**               |
+|            **asprin**             |
+|            **placebo**            |
+|             **Total**             |
+
+| **Common Odds Ratio and Relative Risks** |
+|:----------------------------------------:|
+|              **Statistic**               |
+|              **Odds Ratio**              |
+|                                          |
+|       **Relative Risk (Column 1)**       |
+|                                          |
+|       **Relative Risk (Column 2)**       |
+|                                          |
+
+Column 1 given you are in row 1 (Asprin) your risk of not having a stroke is not greater than 1 for the lower bound
+
+Column 2 given you are in row 1 (Asprin) your risk of having a heart attack is not less than 1 for the upper bound
+
+Therefore, there is a not signifigant benefit of asprin thearapy for strokes
+
+## stratified odds ratio
+
+```{r,eval=FALSE}
+data colds;
+	input smoker $ cold $ Tempature $ count;
+	datalines;
+yes 1-yes 1-poor 20
+yes 1-yes 2-good 15
+yes 2-no 1-poor 100
+yes 2-no 2-good 150 
+no 1-yes 1-poor 30 
+no 1-yes 2-good 25
+no 2-no 1-poor 100
+no 2-no 2-good 200
+;
+
+PROC FREQ DATA=colds;
+	TITLE "Jacob Richards - Mantel-Haenszel Chi-square Test";
+	TABLES smoker*tempature*cold/ALL;
+	WEIGHT COUNT;
+RUN;
+```
+
+| **Table 1 of Tempature by cold** |
+|:--------------------------------:|
+|  **Controlling for smoker=no**   |
+|          **Tempature**           |
+|            **1-yes**             |
+|            **1-poor**            |
+|            **2-good**            |
+|            **Total**             |
+
+first check if the odds ratio for the stratification categories are significantly different
+
++------------------------------+
+| **Breslow-Day Test for\      |
+| Homogeneity of Odds Ratios** |
++:============================:+
+| **Chi-Square**               |
++------------------------------+
+| **DF**                       |
++------------------------------+
+| **Pr \> ChiSq**              |
++------------------------------+
+
+fail to reject the null hypothesis that the odds ratios for the categories are not different
+
+so we can analyse the table all together
+
+test if the odds ratios for both categories are equal to 1
+
+| **Cochran-Mantel-Haenszel Statistics (Based on Table Scores)** |
+|:--------------------------------------------------------------:|
+|                         **Statistic**                          |
+|                             **1**                              |
+|                             **2**                              |
+|                             **3**                              |
+
+reject null —\> the odds ratio for both categories is not 1.
+
+check the value of the common odds ratio
+
+| **Common Odds Ratio and Relative Risks** |
+|:----------------------------------------:|
+|              **Statistic**               |
+|              **Odds Ratio**              |
+|                                          |
+|       **Relative Risk (Column 1)**       |
+|                                          |
+|       **Relative Risk (Column 2)**       |
+|                                          |
+
+upper and lower bounds are greater than 1 —\> with 95% the risk ratio is greater than 1 -\> there is association between poor temp and cold
+
+## Chi-Square given counts
+
+```{r,eval=FALSE}
+data crimes; 
+input district $ crime $ count; 
+datalines; 
+1 1-assault 162
+1 2-Burglary 118
+1 3-Larceny 451
+1 4-Homicide 18
+2 1-assault 310
+2 2-Burglary 196
+2 3-Larceny 996
+2 4-Homicide 25
+3 1-assault 258
+3 2-Burglary 193
+3 3-Larceny 458
+3 4-Homicide 10
+4 1-assault 280
+4 2-Burglary 175
+4 3-Larceny 390
+4 4-Homicide 19
+;
+
+PROC FREQ DATA=crimes;
+      TITLE "Jacob Richards -  Chi-square Test";
+      TABLES district*crime/all; 
+   WEIGHT COUNT;
+RUN;
+```
+
+| **Statistic**  | **DF** | **Value** | **Prob** |
+|:--------------:|:------:|:---------:|:--------:|
+| **Chi-Square** |   9    | 124.5297  | \<.0001  |
+
+reject null hypothesis that the variables are independent.
+
+## Chi square given raw data
+
+Ex:
+
+```{r,eval=FALSE}
+4 categories of predictor, 3 categories of response --> chi square test 
+data structure:
+  col1               col2
+predictor_1       responce_2
+predictor_2       responce_1
+....
+```
+
+if given the raw data, use proc freq to find the frequencies of the variable category occurrences and run the chi square from that
+
+```{r,eval=FALSE}
+proc import datafile="/home/u63989204/Module 5/Module_5_Homework/Homework 5 data.xlsx"
+dbms=xlsx 
+out = work.hw_five replace;
+getnames=yes;
+option validvarname=v7;
+run;
+
+proc contents data=work.hw_five; 
+run;  
+
+data opinion;
+set work.hw_five;
+run;
+
+proc freq data=opinion;
+    tables GL*opinion/all; 
+run;
+```
+
+## chi square for trend
+
+```{r,eval=FALSE}
+DATA TREND;
+INPUT Alcohol $ Mal $ COUNT;
+DATALINES;
+0 N 17066
+1 N 14464
+2 N 788
+3 N 126
+4 N 37
+0 Y 48
+1 Y 38
+2 Y 5
+3 Y 1
+4 Y 1
+;
+PROC FREQ DATA=TREND;
+      TITLE "Chi-square Test for Trend";
+   TABLES Alcohol*Mal / CHISQ;
+   WEIGHT COUNT;
+RUN;
+```
+
+RESULTS:
+
+```{r,eval=FALSE}
+# to test if there is a significant linear trend in proportions, use the “Mantel-Haenszel Chi-square."
+
+Statistics for Table of Alcohol by Mal
+  Statistic 	             DF 	Value   	Prob
+Mantel-Haenszel Chi-Square 	1 	1.8278 	0.1764
+```
+
+## McNemar Test For Paired Data
+
+Paired design: the same subject responds to a question under two different conditions (a dichotomous characteristic)
+
+Ex: a subject is asked their opinion of smoking before and after an anti smoking ad
+
+100 people, asked before and after given data table
+
+```{r,eval=FALSE}
+         	After
+ 	        -	  +
+Before	-	32	15
+ 	      +	30	23
+```
+
+such that, 32 people were negative before and negative after.
+
+```{r,eval=FALSE}
+DATA MCNEMAR;
+LENGTH AFTER BEFORE $ 1;
+INPUT AFTER $ BEFORE $ COUNT;
+FORMAT BEFORE AFTER $OPINION.;
+DATALINES;
+N N 32
+N P 30
+P N 15
+P P 23
+;
+PROC FREQ DATA=MCNEMAR;
+TITLE "McNemar's Test for Paired Samples";
+TABLES BEFORE*AFTER / AGREE ;
+WEIGHT COUNT;
+RUN;
+```
+
+```{r,eval=FALSE}
+      McNemar's Test
+Chi-Square	DF	Pr > ChiSq
+5.0000.  	1	     0.0253
+
+therefore reject the null hypothesis that the variables are independent. 
+
+```
+
+# Module 6 
+
+```{r,eval=FALSE}
+data balls;
+input brand_age $ bounces;
+datalines;
+WNew 67 
+WNew 72
+WNew 74
+WNew 82
+WNew 81 
+WOld 46
+WOld 44
+WOld 45
+WOld 51
+WOld 43 
+PNEW 75
+PNEW 76
+PNEW 80
+PNEW 72 
+PNEW 73
+POld 63
+POld 62
+POld 66
+POld 62
+POld 60
+;
+run;
+
+PROC ANOVA DATA=balls;
+  TITLE "Analysis of balls data";
+  CLASS brand_age; 
+  MODEL bounces = brand_age;
+  MEANS brand_age / SNK ALPHA=0.05;
+RUN;
+```
+
+ANOVA RESULTS:
+
+| **Source** | **DF** | **Sum of Squares** | **Mean Square** | **F Value** | **Pr \> F** |
+|:----------:|:------:|:------------------:|:---------------:|:-----------:|:-----------:|
+| **Model**  |   3    |    2910.600000     |   970.200000    |    60.73    |   \<.0001   |
+
+reject the null hypothesis that all of the means are equal
+
+at least one of the group means is different from the others
+
+**SNK RESULTS:**
+
+the means:
+
+P_new and W_new \> P_old \> W_old
+
+and the means of P_new and W_new are not significantly different
+
+## ANOVA formatted data input (cholesterol medication)
+
+\*Two cholesterol-lowering medications (statins) and a placebo were given to each of 10 volunteers with total cholesterol readings of 240 or higher. After 6 weeks, the foUowing total cholesterol values were recorded Create a SAS data set by reading these data.;
+
+the data is given such that each line is the data samples for each of the three groups
+
+```{r,eval=FALSE}
+data blood_med;
+do group = 'Statin A','Statin B','Placebo';
+	do subject = 1 to 10;
+		input cholesterol @;
+		output;
+	end;
+end;
+datalines;
+220 190 180 185 210 170 178 200 177 189
+160 168 178 200 172 155 159 167 185 199
+240 220 246 244 198 238 277 255 190 188
+;
+
+PROC ANOVA DATA=blood_med;
+   TITLE "Jacob Richards - Analysis of Cholesterol Data";
+   CLASS group; 
+   MODEL cholesterol = group;
+   MEANS group / SNK ALPHA=0.05; 
+RUN;
+
+```
+
+**Anova test results**
+
+| **Source** | **DF** | **Sum of Squares** | **Mean Square** | **F Value** | **Pr \> F** |
+|:-----------|-------:|-------------------:|----------------:|------------:|------------:|
+| **Model**  |      2 |        16258.46667 |      8129.23333 |       17.58 |     \<.0001 |
+
+H0 = The means are equal.
+
+h1 = Not all the means are equal.
+
+The test statistic obtained has a p value of less than 0.0001 which is less than 0.05 and is therefore statistically significant. We therefore reject the null hypothesis and tentatively conclude that at least one of the group means of cholesterol is significantly different than the others.
+
+**SNK test results**
+
+the means:
+
+Placebo \> Statin_A and Statin_B
+
+aswell that the means for statin A and Statin B are not significantly different.
+
+## anova - SNK - contrast (study methods)
+
+DATA SET:
+
+```{r,eval=FALSE}
+data study_methods;
+do group = 'A','B';
+	do student = 1 to 8;
+		input score @;
+		output;
+	end;
+end;
+do group = 'C','D';
+	do student = 1 to 7;
+		input score @;
+		output;
+	end;
+end;
+
+datalines;
+560 520 530 525 575 527 580 620
+565 522 520 530 510 522 600 590 
+512 518 555 502 510 520 516 
+505 508 512 520 543 523 517
+;
+```
+
+anova test
+
+```{r}
+PROC ANOVA DATA=study_methods;
+  TITLE "Jacob Richards - Analysis of Reading Data";
+  CLASS GROUP;  #this names the classification variables to be used in the model, in this case (A,B,C,D)
+  MODEL score = GROUP; # dependent variable = independent variable 
+  MEANS GROUP / SNK ALPHA=0.05; #runs test of the means of groups dependent variables which are the scores of each group
+RUN;
+```
+
+anova results
+
+| **Source** | **DF** | **Sum of Squares** | **Mean Square** | **F Value** | **Pr \> F** |
+|:-----------|-------:|-------------------:|----------------:|------------:|------------:|
+| **Model**  |      3 |         7607.18810 |      2535.72937 |        3.28 |      0.0366 |
+
+SNK/CONTRAST
+
+```{r,eval=FALSE}
+PROC GLM DATA=study_methods;
+   TITLE "Jacob Richards - Analysis of Reading Data - Planned Comparisons";
+   CLASS GROUP; 
+   MODEL score = GROUP;         # A B C D 
+   MEANS PROGRAM / SNK ALPHA=0.05;
+   CONTRAST 'A&B to C&D' GROUP   1 1 -1 -1; 
+   CONTRAST 'A & B & C to D' GROUP   1 1 1 -3;
+#remember to set the coefficient's in the order corresponding to their group's input pattern
+RUN;
+```
+
+**SNK results**
+
+inconclusive
+
+**contrast results**
+
+|      **Contrast**      | **DF** | **Contrast SS** | **Mean Square** | **F Value** | **Pr \> F** |
+|:----------------------:|:------:|:---------------:|:---------------:|:-----------:|:-----------:|
+| **A and B to C and D** |   1    |   7225.152381   |   7225.152381   |    9.36     |   0.0051    |
+|     **D to A B C**     |   1    |   2413.012158   |   2413.012158   |    3.13     |   0.0888    |
+
+The means of A and B to C and D are significantly different.
+
+The means of A and B and C to D are not significantly different.
+
+equivalently, if not specified that you cannot reformat the given data then.
+
+```{r}
+DATA EXAM;
+INPUT PROGRAM $ SCORE @@;
+DATALINES;
+A 560 A 520 A 530 A 525 A 575 A 527 A 580 A 620
+B 565 B 522 B 520 B 530 B 510 B 522 B 600 B 590
+C 512 C 518 C 555 C 502 C 510 C 520 C 516
+D 505 D 508 D 512 D 520 D 543 D 523 D 517
+;
+RUN;
+PROC GLM DATA=EXAM;
+CLASS PROGRAM;
+MODEL SCORE = PROGRAM;
+MEANS PROGRAM / SNK ALPHA=0.05;
+CONTRAST 'A AND B VS. C AND D' PROGRAM -1 -1 1 1;
+CONTRAST 'A B AND C VS. D' PROGRAM -1 -1 -1 3;
+RUN;
+```
+
+## anova - SNK - contrast : formatted data input (reading scores)
+
+DATA:
+
+```{r,eval=FALSE}
+DATA READING;
+   INPUT GROUP $ WORDS @@;
+DATALINES;
+X 700   X 850   X 820   X 640   X 920
+Y 480   Y 460   Y 500   Y 570   Y 580
+Z 500   Z 550   Z 480   Z 600   Z 610
+;
+```
+
+**ANOVA TEST**
+
+```{r,eval=FALSE}
+PROC ANOVA DATA=READING;
+   TITLE "Analysis of Reading Data";
+   CLASS GROUP; /#The CLASS statement names the classification variables to be used in the model. Typical classification variables are TREATMENT, SEX, RACE, GROUP, and REPLICATION. The CLASS statement is required, and it must appear before the MODEL statement#/
+   MODEL WORDS = GROUP; /# MODEL dependent variable = independent variables.#/
+   MEANS GROUP / SNK ALPHA=0.05; /#Compute means of the dependent variables for any effect that appears on the right-hand side in the MODEL statement (GROUP).#/
+/#SNK option performs the Student-Newman-Keuls multiple range test on all main effect means in the MEANS statement.#/
+/#ALPHA= specifies the level of significance for comparisons among the means. By default, ALPHA=0.05. You can specify any value greater than 0 and less than 1.#/
+RUN;
+```
+
+| **Source** | **DF** | **Sum of Squares** | **Mean Square** | **F Value** | **Pr \> F** |
+|:----------:|:------:|:------------------:|:---------------:|:-----------:|:-----------:|
+| **Model**  |   2    |    215613.3333     |   107806.6667   |    16.78    |   0.0003    |
+
+**CONTRAST TEST**
+
+```{r,eval=FALSE}
+PROC GLM DATA=READING;
+   TITLE "Analysis of Reading Data - Planned Comparisons";
+   CLASS GROUP; /#The CLASS statement names the classification variables to be used in the model.#/
+   MODEL WORDS = GROUP;   
+   CONTRAST 'X VS. Y AND Z' GROUP   -2 1 1; 
+/#CONTRAST 'label' independent (CLASS) variable followed by a set of k coefficients (where k is the number of levels of the class variable)#/
+   CONTRAST 'METHOD Y VS Z' GROUP   0 1 -1;
+  #1. The sum of the coefficients must add to 0 
+  #2. The order of the coefficients must match the alphanumeric order of the levels of the CLASS variable if it is not formatted.#/
+RUN;
+```
+
+|   **Contrast**    | **DF** | **Contrast SS** | **Mean Square** | **F Value** | **Pr \> F** |
+|:-----------------:|:------:|:---------------:|:---------------:|:-----------:|:-----------:|
+| **X VS. Y AND Z** |   1    |   213363.3333   |   213363.3333   |    33.22    |   \<.0001   |
+| **METHOD Y VS Z** |   1    |    2250.0000    |    2250.0000    |    0.35     |   0.5649    |
+
 # Module 13
 
 ## select() - selecting variables (columns)
@@ -647,6 +1379,9 @@ fail to reject the null hypothesis that it's normal.
 **DATA HAS TO BE IN LONG FORMAT - might have to clean data**
 
 ```{r}
+setwd("/Users/jacobrichards/Desktop/Personal_save/Stat_405_Module_14/Lab_14.1")
+test <- read.csv(file="hypothesis.csv",header=TRUE)
+
 test$id <- seq(1:nrow(test))
 test
 library(reshape2)
@@ -688,11 +1423,61 @@ just the same you can use Wilcox for 2 sample tests for data you cant assume nor
 wilcox.test(atmos$moisture ~ atmos$treatment)
 ```
 
-## t-test Wilcox paired 
+## 2 sample independent t-test and Wilcox upper tailed
+
+3.) Two friends play a computer game and each of them repeats the same level 10 times.
+
+this is an **independent** two-sample t-test because the thing we are measuring and testing for difference of mean is two different people. The experimental unit is distinct.
+
+```{r}
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+scores <- read.table(file="scores.txt",header=TRUE)
+
+library(tidyverse)
+long <- scores %>%
+            pivot_longer(cols = X1:X10, names_to = "trials", values_to = "scores") %>%
+                select(-trials)
+
+long$ID <- factor(long$ID, levels = c("Player1","Player2"), labels = c("Player1","Player2"))
+```
+
+two sided t-test, unpaired, variance not equal
+
+check normality and variance beforehand
+
+```{r}
+scores <- t(as.matrix(scores))
+colnames(scores) <- scores[1,]
+scores <- as_tibble(scores[-1,])
+library(dplyr)
+
+scores <- scores %>%
+  mutate(across(everything(), as.numeric))
+
+
+shapiro.test(scores$Player1)
+shapiro.test(scores$Player2)
+
+t.test(long$scores ~ long$ID, var.equal=FALSE)
+```
+
+Fail to reject null —\> players means are no different.
+
+Upper tailed Wilcox
+
+```{r}
+wilcox.test(long$scores ~ long$ID, alternative = "greater")
+```
+
+Reject null —\> Player 1 is better than Player 2
+
+## t-test Wilcox paired
 
 **DATA HAS TO BE IN WIDE FORMAT**
 
 Paired data are where there are two measurements on the same experimental unit (individual, site, etc.) For example, the `pollution` dataset gives the biodiversity score of aquatic invertebrates collected using kick samples in 17 different rivers. These data are paired because two samples were taken on each river, one upstream of a paper mill and one downstream. Each individual observation pair originated from the same place.
+
+example:
 
 ```{r}
 library(tidyverse)
@@ -705,19 +1490,39 @@ t.test(pollution$down, pollution$up, paired = TRUE)
 wilcox.test(pollution$down, pollution$up, paired = TRUE)
 ```
 
-## Prop test and chisq test
+example:
 
-### prop test
+" is there a difference in the test scores " —\> two-sided
 
-advertising campaign, counts of those would and would not buy are taken before and after - this is a proportions test
+```{r}
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+HW_6 <- read.csv(file="Homework_6.csv",header=TRUE)
+HW_6
 
-are the proportions significantly different?
+t.test(HW_6$Test.1, HW_6$Test.2, paired = TRUE)
+```
 
-|                               |                           |                       |
-|:-------------------------:|:----------------------:|:-------------------:|
+Was there improvement over the course of the semester. H0: Test 2 - Test 1 \> 0
+
+```{r}
+t.test(HW_6$Test.2, HW_6$Test.1, paired = TRUE, alternative = "greater")
+```
+
+## Proportion test
+
+advertising campaign counts of those would and would not buy are taken before and after - this is a proportions test - they applied a treatment
+
+if they had ran a campaign, then sampled people and tabulated who did and did not by and of which who did or did not see the advertisement, then it would be a contingency table (odds ratio)
+
+Are the proportions significantly different? H0: P1 - P2 = 0
+
++:-----------------------------:+:-------------------------:+:---------------------:+
 |                               | before = **no treatment** | after = **treatment** |
-|   would buy = **+ outcome**   |            45             |          71           |
-| would not buy = **- outcome** |            35             |          32           |
++-------------------------------+---------------------------+-----------------------+
+| would buy = **+ outcome**     | 45                        | 71                    |
++-------------------------------+---------------------------+-----------------------+
+| would not buy = **- outcome** | 35                        | 32                    |
++-------------------------------+---------------------------+-----------------------+
 
 ```{r}
 buy <- c(45,71)                     # creates a vector of positive outcomes
@@ -725,12 +1530,49 @@ total <-c((45 + 35), (71 + 32))   # creates a vector of total numbers
 prop.test(buy, total)   
 ```
 
-same thing but perform a chi-square test - you can also use the chisq.test function on raw un-tabulated data
+There is no evidence to support that the advertising campaign has changed cat owners' opinions of cat food (*p* = 0.107)
+
+## Chi-square
+
+Test whether the number of cat owners buying the cat food is independent of the advertising campaign.
+
+same thing but perform a chi-square test for independence rather than difference of proportion, in this context those are the same thing
 
 ```{r}
 buyers <- matrix(c(45, 35, 71, 32), nrow = 2)
 chisq.test(buyers)
 ```
+
+you can also use the chisq.test function on raw un-tabulated data
+
+```{r}
+data <- read.csv(file="homework_5_data.csv",header=TRUE)
+data <- as_tibble(data)
+data <- table(data)
+data
+chisq.test(data)
+```
+
+Fail to reject the null hypothesis that the variables are independent.
+
+## Contingency Table (odds ratio)
+
+**set continuity correct = false** (correct = FALSE)
+
+A random sample of 90 adults is classified according to gender and the number of hours of television watched during a week:
+
+They did not apply any treatment —\> contingency table (odds ratio)
+
+Use a 0.01 level of significance and test the hypothesis that the time spent watching television is independent of whether the viewer is male or female.
+
+```{r}
+table <- matrix(data=c(15,29,27,19),nrow=2,ncol=2,byrow=TRUE,dimnames = list(c("Over 25 hours", "Under 25 hours"),c("Male", "Female")))
+table <- t(table)
+table
+chisq.test(table, correct = FALSE)
+```
+
+The p-value obtained is 0.01934 which is greater than 0.01, we therefore fail to reject the null hypothesis that time spent watching television is independent of whether the viewer is male or female.
 
 ## correlation coefficients and plots
 
@@ -756,6 +1598,8 @@ pairs(times[,c(14,11)])
 
 cor(times[,4:14]) #or can just do this and then check that there is actually a linear relationship between the variables
 ```
+
+### p-value of correlation coefficient
 
 to test if these correlation coefficients are statistically significant you need to use.
 
@@ -793,8 +1637,9 @@ Factorial ANOVA	          Y ~ X1 (cat) * X2(cat)	            lm(Y ~ X1 * X2) or 
 produce model
 
 ```{r}
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
 smoke <- read.table(file="smoking.txt",header=TRUE) 
-smoke_lm <- lm(mortality ~ smoking,data=smoke)
+smoke_lm <- lm(mortality ~ smoking, data=smoke)
 summary(smoke_lm)
 ```
 
@@ -823,6 +1668,8 @@ predicted_smoke_120
 CI_predicted_smoke_120 <- predict(smoke_lm, newdata = data.frame(smoking = 120), interval = "confidence", level = 0.98)
 CI_predicted_smoke_120
 ```
+
+### Verify Model
 
 **Plot the model**
 
@@ -858,6 +1705,8 @@ qqnorm(smoke_res)
 qqline(smoke_res) 
 ```
 
+This actually does look kind of suspicious.
+
 **4.) Studentized Residuals vs. Predictor observation number**
 
 ```{r}
@@ -884,7 +1733,11 @@ library(ggfortify)
 autoplot(smoke_lm, which = 1:6, ncol = 2, label.size = 3)
 ```
 
-in the bottom right plot, the y axis cooks distance is the influence the point has on the model, the leverage is how far the value is away the mean of the predictor
+Cook's distance is how much influence that point has on the coefficients of the model.
+
+we notice that point 2 has more than double the influence than any other point, maybe it's and outlier and the the model would be more representative of the relationship of the variables without it.
+
+### Update model from verification plots
 
 so this one is probably hurting the model because it's far outside the data center (less accurate) and has high impact
 
@@ -893,9 +1746,15 @@ smoke_lm2 <- update(smoke_lm, subset = -2)
 summary(smoke_lm2)
 ```
 
+```         
+R^2 before 0.4918 --- after: 0.5622
+```
+
 ## anova
 
 linear model with categorical variable as predictor will compute anova test
+
+Example: test is significant —\> reject null, the groups are different
 
 ```{r}
 # this will evaluate an anova test 
@@ -918,11 +1777,9 @@ Coefficients:
   
   Coefficients:
                  Estimate Std. Error t value Pr(>|t|)    
-(Intercept)        135.00       5.25  25.713  < 2e-16 ***
-risk.grouplow      -57.83       8.02  -7.211 3.16e-07 ***
-risk.groupmedium   -27.55       6.90  -3.992 0.000615 ***
-  
-  
+(Intercept)        135.00       5.25  25.713  < 2e-16 *** #reject null --> mean of high group != zero
+risk.grouplow      -57.83       8.02  -7.211 3.16e-07 *** #reject null --> mean of low != high group
+risk.groupmedium   -27.55       6.90  -3.992 0.000615 *** #reject null --> mean of medium != high group
   
   
   
@@ -933,7 +1790,8 @@ risk.groupmedium   -27.55       6.90  -3.992 0.000615 ***
    < 2e-16 *** #this is testing the null hypotheis that the mean mortality index of the high risk group is equal to zero. --> reject h0, not zero
   
   
-risk.grouplow      -57.83       8.02  -7.211 3.16e-07 *** # these estimate values are the estimated mean differences of it and the high risk group (whaterver one gets assaigned to the intercept) 
+risk.grouplow      -57.83       8.02  -7.211 3.16e-07 ***
+# these estimate values are the estimated mean differences of it and the high risk group (whaterver one gets assaigned to the intercept) 
   # as in risk.grouplow - risk.grouphigh = -57.83 ---> 135 - 57.83 = 77.17  
   
   3.16e-07 *** # this is testing  H0: abs(risk.grouplow - risk.grouphigh) = 0 , 2 sided --> reject h0: they are different
@@ -944,4 +1802,45 @@ risk.groupmedium   -27.55       6.90  -3.992 0.000615 *** # risk.groupmedium - r
   0.000615 *** # this is testing  H0: abs(risk.groupmedium - risk.grouphigh) = 0 , 2 sided --> reject h0: they are different
   
 
+```
+
+Example where the test is not significant
+
+```{r, warning=FALSE}
+setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
+plasma <- read.csv(file="plasma.csv",header=TRUE)
+plasma$time <- factor(plasma$time,levels=c("8am", "11am", "2pm", "5pm", "8pm"), 
+                      labels = c("8am", "11am", "2pm", "5pm", "8pm"))
+plasma_model <- lm(plasma ~ time, data = plasma)
+
+```
+
+```{r}
+anova(plasma_model)
+```
+
+Pr(\>F) = 0.1132 —\> fail to reject the null hypothesis that the group means are NOT different from each other.
+
+```{r}
+summary(plasma_model)
+```
+
+```         
+(Intercept)  118.500      5.944  19.935   <2e-16 *** ---> reject null, 8AM group mean does NOT equal zero. 
+```
+
+```         
+time11am       9.400      8.407   1.118    0.269 ---> fail to reject null --> conclude that 11 AM group mean is not different than 8AM
+```
+
+```         
+time2pm        1.800      8.407   0.214    0.831 ---> fail to reject null --> conclude that 2 pm group mean is not different than 8AM
+```
+
+```         
+time5pm      -13.700      8.407  -1.630    0.110 ---> fail to reject null --> conclude that 5 pm group mean is not different than 8AM
+```
+
+```         
+time8pm        1.200      8.407   0.143    0.887 ---> fail to reject null --> conclude that 8 pm group mean is not different than 8AM
 ```

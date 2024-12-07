@@ -86,29 +86,33 @@ that each groups mean is not different from the 8am groups mean and
 therefore conclude that the different groups means are not different
 from each other,
 
-+----------+----------------------------+----------------------------+
-| Group    | H0:                        | P-value                    |
-+==========+============================+============================+
-| time11am | H0: 8am group mean - 11 am | ```                        |
-|          | group mean = 0             | 0.26                       |
-|          |                            | 9 > .05, fail to reject H0 |
-|          |                            | ```                        |
-+----------+----------------------------+----------------------------+
-| time2pm  | H0: 8am group mean - 2 pm  | ```                        |
-|          | group mean = 0             | 0.83                       |
-|          |                            | 1 > .05, fail to reject H0 |
-|          |                            | ```                        |
-+----------+----------------------------+----------------------------+
-| time5pm  | H0: 8am group mean - 5 pm  | ```                        |
-|          | group mean = 0             | 0.110                      |
-|          |                            |   > .05, fail to reject H0 |
-|          |                            | ```                        |
-+----------+----------------------------+----------------------------+
-| time8pm  | H0: 8am group mean - 8 pm  | ```                        |
-|          | group mean = 0             | 0.88                       |
-|          |                            | 7 > .05, fail to reject H0 |
-|          |                            | ```                        |
-+----------+----------------------------+----------------------------+
++--------------+-------------------------+-------------------------+
+| Group        | H0:                     | P-value                 |
++==============+=========================+=========================+
+| time11am     | H0: 8am group mean - 11 | ```                     |
+|              | am group mean = 0       | 0.26                    |
+|              |                         | 9 >                     |
+|              |                         |  .05, fail to reject H0 |
+|              |                         | ```                     |
++--------------+-------------------------+-------------------------+
+| time2pm      | H0: 8am group mean - 2  | ```                     |
+|              | pm group mean = 0       | 0.83                    |
+|              |                         | 1 >                     |
+|              |                         |  .05, fail to reject H0 |
+|              |                         | ```                     |
++--------------+-------------------------+-------------------------+
+| time5pm      | H0: 8am group mean - 5  | ```                     |
+|              | pm group mean = 0       | 0.110                   |
+|              |                         |   >                     |
+|              |                         |  .05, fail to reject H0 |
+|              |                         | ```                     |
++--------------+-------------------------+-------------------------+
+| time8pm      | H0: 8am group mean - 8  | ```                     |
+|              | pm group mean = 0       | 0.88                    |
+|              |                         | 7 >                     |
+|              |                         |  .05, fail to reject H0 |
+|              |                         | ```                     |
++--------------+-------------------------+-------------------------+
 
 finally, therefore we conclude there is not a difference in blood plasma
 levels at different times of the day
@@ -125,8 +129,6 @@ long <- scores %>%
                 select(-trials)
 
 long$ID <- factor(long$ID, levels = c("Player1","Player2"), labels = c("Player1","Player2"))
-
-write.csv(long, file="long.csv")
 ```
 
 a.  Player 2 insists that he is the better player and suggests to
@@ -148,7 +150,6 @@ scores <- scores %>%
 
 shapiro.test(scores$Player1)
 shapiro.test(scores$Player2)
-
 
 t.test(long$scores ~ long$ID, var.equal=FALSE)
 ```
