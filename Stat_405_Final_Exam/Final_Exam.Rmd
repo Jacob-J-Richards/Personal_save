@@ -595,7 +595,7 @@ right
 
 # Module 14
 
-## t-tests, Wilcox - INDEPENDENT LONG DATA - PAIRED WIDE DATA
+## t-tests, Wilcox (one sample)
 
 one sample - two sided
 
@@ -642,7 +642,20 @@ shapiro.test(trees$Height)
 
 fail to reject the null hypothesis that it's normal.
 
-## two sample t-tests - unpaired - Variance test
+## t-tests - Wilcox - 2 sample independent - Variance test
+
+**DATA HAS TO BE IN LONG FORMAT - might have to clean data**
+
+```{r}
+test$id <- seq(1:nrow(test))
+test
+library(reshape2)
+long_data <- melt(data = test, id.vars = c("id"),
+                   measured.vars = c("Aspirin", "Tylenol"),
+                   variable.name = "Brand", value.name = "Time")
+long_data
+t.test(long_data$Time ~ long_data$Brand)
+```
 
 H0: the two samples come from distributions with the same mean
 
@@ -673,16 +686,19 @@ just the same you can use Wilcox for 2 sample tests for data you cant assume nor
 
 ```{r}
 wilcox.test(atmos$moisture ~ atmos$treatment)
-
 ```
 
-## Paired t-tests
+## t-test Wilcox paired 
+
+**DATA HAS TO BE IN WIDE FORMAT**
 
 Paired data are where there are two measurements on the same experimental unit (individual, site, etc.) For example, the `pollution` dataset gives the biodiversity score of aquatic invertebrates collected using kick samples in 17 different rivers. These data are paired because two samples were taken on each river, one upstream of a paper mill and one downstream. Each individual observation pair originated from the same place.
 
 ```{r}
+library(tidyverse)
 pollution <- read.table('pollution.txt', header = TRUE)
-str(pollution)
+pollution <- as_tibble(pollution)
+pollution
 
 t.test(pollution$down, pollution$up, paired = TRUE)
 
@@ -693,12 +709,12 @@ wilcox.test(pollution$down, pollution$up, paired = TRUE)
 
 ### prop test
 
-advertising campaign, counts of those would and would not buy are taken before and after
+advertising campaign, counts of those would and would not buy are taken before and after - this is a proportions test
 
 are the proportions significantly different?
 
 |                               |                           |                       |
-|:-----------------------------:|:-------------------------:|:---------------------:|
+|:-------------------------:|:----------------------:|:-------------------:|
 |                               | before = **no treatment** | after = **treatment** |
 |   would buy = **+ outcome**   |            45             |          71           |
 | would not buy = **- outcome** |            35             |          32           |
@@ -716,9 +732,7 @@ buyers <- matrix(c(45, 35, 71, 32), nrow = 2)
 chisq.test(buyers)
 ```
 
-14.2
-
-## correlation coeficients and plots 
+## correlation coefficients and plots
 
 Pearson’s product-moment correlation coefficient between two continuous variables is the default correlation coefficient in the function
 
@@ -777,13 +791,15 @@ Factorial ANOVA	          Y ~ X1 (cat) * X2(cat)	            lm(Y ~ X1 * X2) or 
 ## linear regression
 
 produce model
+
 ```{r}
 smoke <- read.table(file="smoking.txt",header=TRUE) 
 smoke_lm <- lm(mortality ~ smoking,data=smoke)
 summary(smoke_lm)
 ```
 
-plot with data and correlation coefficient 
+plot with data and correlation coefficient
+
 ```{r}
 slope_intercept <- coefficients(smoke_lm)
 plot(mortality ~ smoking,data=smoke)
@@ -792,6 +808,7 @@ cor(y=smoke$mortality, x=smoke$smoking)
 ```
 
 summary of model
+
 ```{r}
 summary(smoke_lm) #check for significance of coeficient's 
 anova(smoke_lm) #this is a condensed form of an anova table, signifigant p-value of F statistic - model is signifigant
