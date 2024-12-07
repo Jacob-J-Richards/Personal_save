@@ -731,7 +731,6 @@ cor(trees) #or produce a matrix of the coef's
 
 cor(trees, use = "complete.obs") #if theres is an NA 
 
-
 setwd("~/Desktop/Personal_save/Stat_405_Module_14/Lab_14.2")
 times <- read.csv(file="Game_Times.csv",header=TRUE)
 
