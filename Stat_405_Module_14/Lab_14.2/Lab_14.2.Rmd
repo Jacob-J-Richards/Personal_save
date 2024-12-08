@@ -29,6 +29,7 @@ You have to open it in another the plot in another window but you can see that T
 b. Examine the dataset numerically and draw conclusions.
 ```{r}
 cor(times[,4:14])
+cor.test(times$Time.of.Game,times$Pitchers)
 ```
 
 If you examine the Time.of.Game column you can see that the greatest coloration coefficient is with Pitchers.

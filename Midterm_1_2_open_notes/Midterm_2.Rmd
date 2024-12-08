@@ -346,6 +346,13 @@ flowers[-(1:85), -c(4, 7, 8)]
 ```
 
 difference between %in% and == operators
+x %in% y
+the index within x of which somewhere in the vector why is the same value 
+
+x == y 
+component by component x[i] == y[i]
+
+therefore x[x %in% y] is equivalent to intersect(x,y)
 
 ```{r,eval=FALSE}
 > x <- c('a','b','c')

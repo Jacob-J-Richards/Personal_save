@@ -36,7 +36,8 @@ The p-value resulting from the test is greater than 0.05, fail to reject the nul
 
 b.) Perform a Wilcoxon rank-sum test.
 ```{r}
-wilcox.test(long_data$Time ~ long_data$Brand)
+library(coin)
+wilcox_test(Time ~ Brand, data = long_data, distribution = "exact")
 ```
 
 The p-value resulting from the test is greater than 0.05, fail to reject the null hypothesis that the true location shift is equal to zero.

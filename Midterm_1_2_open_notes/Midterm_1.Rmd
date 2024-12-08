@@ -795,7 +795,7 @@ will compute for each of these variables
 
 ### proc means by category 
 ```{r,eval=FALSE}
-PROC MEANS DATA = crew MAXDEC=1; /#PROC MEANS Statement Computes descriptive statistics for variables.#/
+PROC MEANS DATA = crew MAXDEC=1; # MAXDEC=1; WILL ONLY OUTPUT TO 1 DECIMAL PLACE
   VAR Salary; /#Identifies Salary as the analysis variable#/
   CLASS JobCode; /#JobCode defines the subgroup combinations for the analysis #/
   TITLE "Salary by Job Code"; /# create title in the output#/

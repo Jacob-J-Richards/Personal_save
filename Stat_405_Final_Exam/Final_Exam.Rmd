@@ -63,6 +63,26 @@ DATALINES;
 ; 
 ```
 
+## data that is comma delimeted and contained within quotes
+
+```{r, eval=FALSE}
+DATA HTWT;
+INFILE DATALINES DSD;
+INPUT ID
+GENDER  $
+AGE
+HEIGHT
+WEIGHT;
+DATALINES;
+1,"M", 23, 68.5, 155
+2, F,, 61.2, 99
+3, M, 55,70, 202
+;
+RUN;
+PROC PRINT DATA=HTWT;
+RUN;
+```
+
 if datalines are delimited by something
 
 ## complex data inputting
@@ -224,14 +244,15 @@ proc print data=labor_expenses;
 
 ```{r, eval=FALSE}
 data adults;
-infile '/home/u63989204/Module 3/Module_3_labs/adults(1).txt' firstobs=2; #starts read at second line of file
+infile '/home/u63989204/Midterm 1/Module 3/Module_3_labs/adults(1).txt' firstobs=2;
 input weight bloodp; 
 run;
 
 proc print data=adults; 
+run;
 ```
 
-### data delimeter and line of first observation option
+### csv read in, delimeter set, line of first obs set
 
 ```{r, eval=FALSE}
 DATA HW4_2;
@@ -324,21 +345,184 @@ PROC PRINT DATA = DIFFERENCE;
 RUN;
 ```
 
+## more lag() function usage
+
+```{r, eval=FALSE}
+DATA CLINICAL;
+LENGTH PATIENT VISIT DATE_VISIT 8;
+RETAIN DATE_VISIT WEIGHT;
+DO PATIENT = 1 TO 25;
+IF RANUNI(135) LT .5 THEN GENDER = 'Female';
+ELSE GENDER = 'Male';
+X = RANUNI(135);
+IF X LT .33 THEN GROUP = 'A';
+ELSE IF X LT .66 THEN GROUP = 'B';
+ELSE GROUP = 'C';
+DO VISIT = 1 TO INT(RANUNI(135)*5);
+IF VISIT = 1 THEN DO;
+DATE_VISIT = INT(RANUNI(135)*100) + 15800;
+WEIGHT = INT(RANNOR(135)*10 + 150);
+END;
+ELSE DO;
+DATE_VISIT = DATE_VISIT + VISIT*(10 + INT(RANUNI(135)*50));
+WEIGHT = WEIGHT + INT(RANNOR(135)*10);
+END;
+OUTPUT;
+IF RANUNI(135) LT .2 THEN LEAVE;
+END;
+END;
+DROP X;
+FORMAT DATE_VISIT DATE9.;
+RUN;
+
+
+
+*^ given code from lab above; 
+data difference_by_visit;
+	set clinical;
+	by patient;
+	diference_weight_from_previous = weight - lag(weight);   
+*current observed weight minus previous observed weight for same patient;
+*just as diff in R;
+	
+	if not first.patient then output;
+*specifies to only compute this when patient observation n>1 is read;
+run;
+
+proc print data = difference_by_visit;
+```
+
+## programming with dates and formating date input and output
+
+```{r, eval=FALSE}
+data people;
+input ID @5 DOB MMDDYY8. @13 start_date MMDDYY8. @21 end_date MMDDYY8. @29 sales 5.;
+
+Age_work_started_years = (abs(DOB) + start_date)/365;
+
+Length_at_work_years = (end_date - start_date)/365;
+
+sales_per_year_of_work = sales/Length_at_work_years;
+
+sales_per_year_rounded = round(sales_per_year_of_work, 10);
+
+datalines; 
+001 1021194611121980122819887343
+002 0913195502021980020419880123
+005 0606194003121981031220040000
+003 0705194411151980111320009544
+; 
+run;
+
+proc print data=people;
+title "Jacob Richards data people";
+format DOB MMDDYY10.; 
+format Age_work_started_years 8.; #this just rounds off the decimal places;
+format sales_per_year_rounded dollar6.;
+var ID DOB Age_work_started_years Length_at_work_years sales_per_year_rounded;
+run;
+```
+
+if you want to hardcode a date you do this
+
+```{r, eval=FALSE}
+age_actual = ('15JAN2005'D - DOB)/365.25;
+age_today = ('13SEP2024'D - DOB)/365.25;
+```
+
+where dob is an input argument
+
+## date options
+
+```{r,eval=FALSE}
+3.2.7 has full list of functions dealing with dates such as 
+AGE = ROUND(YRDIF(DOB,ADMIT, ‘ACTUAL’),.1); 
+
+```
+
+if you want to round or find weekday, month, or year of a date
+
+```{r, eval=FALSE}
+age = (abs(DOB) + ADMIT)/365.25;
+age = round(age,1);
+
+day = weekday(ADMIT);
+month = month(ADMIT);
+```
+
+## more dates input, output, programming
+
+```{r, eval=FALSE}
+data mice_contagion;
+input number date_of_birth : date9. date_of_contraction : date9. date_of_death : date9. group $;
+birth_to_disease_time = date_of_contraction - date_of_birth;
+disease_to_death_time = date_of_death - date_of_contraction;
+age_at_death = date_of_death - date_of_birth;
+
+*the colon is needed for date informats in a list because the length of a date 
+is inherently variable;
+
+
+datalines;
+1 23MAY1990 23JUN1990 28JUN1990 A
+2 21MAY1990 27JUN1990 05JUL1990 A
+3 23MAY1990 25JUN1990 01JUL1990 A
+4 27MAY1990 07JUL1990 15JUL1990 A
+5 22MAY1990 29JUN1990 22JUL1990 B
+6 26MAY1990 03JUL1990 03AUG1990 B
+7 24MAY1990 01JUL1990 29JUL1990 B
+8 29MAY1990 15JUL1990 18AUG1990 B
+;
+
+
+proc means data = mice_contagion mean std stderr;    
+
+title "mean, standard deviation, and standard error for birth to disease, disease to death, and age time in days for each group";
+class group;
+*compute these statistics for objects of each group seperatly;
+var birth_to_disease_time   disease_to_death_time   age_at_death;
+*compute these statistics of each of these variables of each group;
+
+proc print data=mice_contagion;
+var birth_to_disease_time   disease_to_death_time   age_at_death;
+```
+
+## reapeating data input patterns
+
+```{r, eval=FALSE}
+DATA BLOOD;
+LENGTH GROUP $ 1;
+INPUT ID GROUP $ TIME WBC RBC @@;
+DATALINES;
+1 A 1 8000 4.5 1 A 2 8200 4.8 1 A 3 8400 5.2
+1 A 4 8300 5.3 1 A 5 8400 5.5
+2 A 1 7800 4.9 2 A 2 7900 5.0
+3 B 1 8200 5.4 3 B 2 8300 5.4 3 B 3 8300 5.2
+3 B 4 8200 4.9 3 B 5 8300 5.0
+4 B 1 8600 5.5
+5 A 1 7900 5.2 5 A 2 8000 5.2 5 A 3 8200 5.4
+5 A 4 8400 5.5
+;
+```
+
+the \@\@ has the data input repeat by these 5 variables regardless of line location, simply left to right list style
+
 # Module 4
 
 ## means table, evaluating mean of variable by numerical value category
 
 ```{r, eval=FALSE}
 DATA HW4_2;
-Infile '/home/u63989204/Module 4/Module_4_Homework/exchange rates.csv' DLM=',' FIRSTOBS=2;
+Infile '/home/u63989204/Midterm 1/Module 4/Module_4_Homework/exchange rates.csv' DLM=',' FIRSTOBS=2;
 Input Date : MMDDYY10. USD JPY EUR GBP AUD BRL CAD CNY DKK
-HKD INR MYR MXN NOK NZD KRW SEK SGD LKR ZAR TWD THB;
+HKD INR MYR MXN NOK NZD KRW SEK SGD LKR ZAR TWD
+THB;
 Year=Year(Date);
 run;
 
 PROC Means data=HW4_2;
 BY Year;
-output out=AVG mean=; #prevents any other statistics from being calculated;
+output out=AVG mean=;
 run;
 
 proc print data=AVG;
@@ -406,6 +590,7 @@ run;
 proc print data = normaltest;
 where reject=0;
 run;
+# the table produced is all of the normality tests which fail to reject null, so all variables that have all 4 tests fail to reject null are normal variables, the variables with 2 or 3 tests present in this resulting table we identified as having tests which rejected the null 
 ```
 
 scroll all the way down to the table of the variable table, reject = 0 (fail to reject) —-\> normally distributed
@@ -420,15 +605,217 @@ run;
 
 these variables have at least one test with a p-value less than 0.05 —\> reject null hypothesis —\> variables are not normally distributed
 
+## conifdence interval for mean of computed values
+
+```{r, eval=FALSE}
+data clinic; 
+input id 1-3 gender $ 4-4 race $ 5-5 HR 6-8 SBP 9-11 DBP 12-14 N_PROC 15-16;
+
+AVE_BP = DBP + 1/3*(abs(SBP - DBP));
+
+datalines;
+001MW08013008010
+002FW08811007205
+003MB05018810002
+004FB   10806801
+005MW06812208204
+006FB101   07404
+007FW07810406603
+008MW04811207006
+009FB07719011009
+010FB06616410610
+;
+
+*when you copy and paste it omits more than 1 space which is what i assumed happened 
+beetween the textbook and the data to copy in the lab instructions 
+because in the textbook the data is clearly aligned.; 
+
+proc means data=clinic n clm mean std median alpha=.05;
+var SBP DBP AVE_BP;
+run;
+
+*includes confidence limits for the mean;
+```
+
+## ALL DESCRIPTIVE STATISTICS - proc univarate - proc freq - proc means
+
+```{r, eval=FALSE}
+*SAS Tutorial 4.1; 
+
+*First, write a code to read in the Crews.csv dataset;
+
+PROC IMPORT DATAFILE='/home/u63989204/Midterm 1/Module 4/tutorials/Crews.csv'
+            OUT=crew
+            DBMS=CSV
+            REPLACE;
+run;
+
+proc print data = crew;
+run;
+
+
+PROC MEANS DATA = crew MAXDEC=1; /*PROC MEANS Statement Computes descriptive statistics for variables.*/
+  VAR Salary; /*Identifies Salary as the analysis variable*/
+  CLASS JobCode; /*JobCode defines the subgroup combinations for the analysis */
+  TITLE "Salary by Job Code"; /* create title in the output*/
+RUN;
+
+PROC MEANS DATA = crew /*Mean precedure specifies the input data set.*/
+  MIN Q1 MEDIAN Q3 MAX /* Five-Number Summary */
+  QRANGE               /* Interquartile Range */
+  CLM                  /* 95% Confidence Interval */
+  T PRT                /* T-Test of Mean Salary=0 */
+  MAXDEC=0;            /*specifies the number of decimal places for printed statistics */
+  VAR Salary;
+RUN;
+
+
+DM 'clear log; clear output';  /*Clear log and output*/
+
+DATA student;   /*Define a data set call Student*/
+   INFILE DATALINES; /*specifies that the input data immediately follows the DATALINES statement in the DATA step*/
+   INPUT gender $ age marstat $ credits state $; /*List input 5 variables:*/ 
+   			    /* gender, marstat and state are character variables*/
+                           /* age and credits are numeric variables */ 
+DATALINES;										   
+F 23 S 13 MN
+F 21 S 10 WI
+F 22 S 09 MN
+F 35 M 08 MN
+F 22 M 11 MN
+F 25 S 12 WI
+M 20 S 13 MN
+M 26 M 11 WI
+M 27 S 9 MN
+M 23 S 14 IA
+M 21 S 12 MN
+M 29 M 10 MN
+;
+RUN;
+TITLE 'Student Data';
+
+PROC PRINT DATA=student;              /*Print the data set called student*/
+ VAR gender age marstat credits state ; /*Display the variables in the order  from left to right*/
+RUN;
+
+PROC PRINT DATA=student;
+RUN;
+
+PROC FREQ DATA = student; /*Use to compute frequencies*/
+  TABLES gender / NOCUM NOPERCENT; /*Provide a table of frequencies for the variable GENDER omit both cumulative statistics and percentages.*/
+RUN;
+
+PROC UNIVARIATE DATA =student; /*PROC UNIVARIATE provides more descriptive statistics such as mean, stdv, variance, min, max...*/
+  VAR credits; /*Identifies Credits as the analysis variable*/
+  BY gender; /*You can specify a BY statement with PROC UNIVARIATE to obtain separate analyses for each BY group. */
+RUN;
+
+PROC UNIVARIATE DATA = student MU0=20 12; /*The following statement tests the hypothesis MU=20 for the first variable and the hypothesis MU=12 for the second variable. */
+  VAR age credits;  /*specifies the analysis variables and their order in the results.*/
+RUN; 
+
+PROC UNIVARIATE DATA = student CIBASIC(ALPHA=0.1)  ; /*Requests confidence limits for the mean, standard deviation, and variance. The option ALPHA= specifies the level of significance for confidence intervals*/
+  VAR CREDITS;
+RUN;
+
+PROC UNIVARIATE DATA = student
+    NEXTROBS=6; /*specifies the number of extreme observations that PROC UNIVARIATE lists in the table of extreme observations.*/
+  VAR credits;
+  ID gender state; /*The ID statement specifies one or more variables to include in the table of extreme observations */
+RUN;
+
+
+```
+
+### proc means - confidence interval for means - standard dev and median
+
+```{r,eval=FALSE}
+proc means data=clinic n clm mean std median alpha=.05;
+var SBP DBP AVE_BP;
+run;
+```
+
+the confidence interval is set on the mean by clm set before mean in the statement, followed by alpha being set.
+
+will compute for each of these variables
+
+### proc means by category
+
+```{r,eval=FALSE}
+PROC MEANS DATA = crew MAXDEC=1; # MAXDEC=1; WILL ONLY OUTPUT TO 1 DECIMAL PLACE
+  VAR Salary; /#Identifies Salary as the analysis variable#/
+  CLASS JobCode; /#JobCode defines the subgroup combinations for the analysis #/
+  TITLE "Salary by Job Code"; /# create title in the output#/
+RUN;
+```
+
+### proc means 5 number summary
+
+```{r,eval=FALSE}
+PROC MEANS DATA = crew /#Mean precedure specifies the input data set.#/
+  MIN Q1 MEDIAN Q3 MAX /# Five-Number Summary #/
+  QRANGE               /# Interquartile Range #/
+  CLM                  /# 95% Confidence Interval #/
+  T PRT                /# T-Test of Mean Salary=0 #/
+  MAXDEC=0;            /#specifies the number of decimal places for printed statistics #/
+  VAR Salary;
+RUN;
+```
+
+### proc univarate for variable by stratification
+
+```{r,eval=FALSE}
+PROC UNIVARIATE DATA =student; /#PROC UNIVARIATE provides more descriptive statistics such as mean, stdv, variance, min, max...#/
+  VAR credits; /#Identifies Credits as the analysis variable#/
+  BY gender; /#You can specify a BY statement with PROC UNIVARIATE to obtain separate analyses for each BY group. #/
+RUN;
+```
+
+### proc univarate mean hypothesis test, (one sample t-test)
+
+```{r,eval=FALSE}
+PROC UNIVARIATE DATA = student MU0=20 12; /#The following statement tests the hypothesis MU=20 for the first variable and the hypothesis MU=12 for the second variable. #/
+  VAR age credits;  /#specifies the analysis variables and their order in the results.#/
+RUN; 
+```
+
+### proc univarate confidence intervals for mean, standard dev, and variance
+
+```{r,eval=FALSE}
+PROC UNIVARIATE DATA = student CIBASIC(ALPHA=0.1)  ; /#Requests confidence limits for the mean, standard deviation, and variance. The option ALPHA= specifies the level of significance for confidence intervals#/
+  VAR CREDITS;
+RUN;
+```
+
+### proc univarate finds extreme observations
+
+```{r,eval=FALSE}
+PROC UNIVARIATE DATA = student
+    NEXTROBS=6; /#specifies the number of extreme observations that PROC UNIVARIATE lists in the table of extreme observations.#/
+  VAR credits;
+  ID gender state; /#The ID statement specifies one or more variables to include in the table of extreme observations #/
+RUN;
+```
+
+### simple frequency table
+
+```{r,eval=FALSE}
+PROC FREQ DATA = student; /*Use to compute frequencies*/
+  TABLES gender / NOCUM NOPERCENT; /*Provide a table of frequencies for the variable GENDER omit both cumulative statistics and percentages.*/
+RUN;
+```
+
 # Module 5 - SAS
 
 ## odds ratio
 
-CASE VS CONTROL
+**Case vs Control studies - select individuals with +/- outcomes then look back for effect of risk factors**
 
-both cause and effect already occurred independently, now we are just analyzing what happened.
+odds ratio test for independence of variables just like the chi-square specifically for contingency tables.
 
 Question: Is there evidence that the results of the entrance exam are related to race? Analysis: Perform a statistical test of association between row and column variables. Null Hypothesis: Exam results and race of examinee are independent. Alternative Hypothesis: Exam results and race of examinee are not independent.
+
+we're testing the same null hypothesis as a chi-square test, that the variables are independent.
 
 the first row and the first column are the exposure and outcome categories we are testing for association.
 
@@ -482,6 +869,8 @@ odds ratio contains 1 within it's upper and lower bounds —\> odds ratio is not
 
 (Use SAS) A random sample of 90 adults is classified according to gender and the number of hours of television watched during a week: Use a 0.01 level of significance and test the hypothesis that the time spent watching television is independent of whether the viewer is male or female.
 
+same thing here it's asking if the categorical variables are independent.
+
 ```{r,eval=FALSE}
 data tv;
 input gender $ GT_or_LT $ count; 
@@ -517,6 +906,8 @@ Relative Risk (Col 2)   0.6157      0.3565    1.0636
 odds ratio confidence interval at alpha = 0.01 contains 1 —\> insufficient evidence to conclude that odds ratio does not equal 1 —\> fail to reject null that variables are independent.
 
 ## Risk Ratio
+
+**Cohort studies - select individuals with +/- risk factors then follow through time to see if outcome occurs**
 
 *A randomized clinical trial compared aspirin to placebo for the prevention of heart attacks (Mis) and strokes. Out of a total of 1,000 subjects on aspirin, there were 80 heart attacks and 65 strokes;* out of a total of 2,000 subjects on placebo, there were 240 heart attacks and 165 strokes. is there a significant benefit for aspirin therapy for heart attacks and strokes? What is the RR for aspirin use for each of these two outcomes? (Careful here, you are given the total number of subjects in each group and the number of complications.);
 
@@ -580,9 +971,24 @@ Column 1 given you are in row 1 (Asprin) your risk of not having a stroke is not
 
 Column 2 given you are in row 1 (Asprin) your risk of having a heart attack is not less than 1 for the upper bound
 
-Therefore, there is a not signifigant benefit of asprin thearapy for strokes
+Therefore, there is a not significant benefit of asprin thearapy for strokes
 
 ## stratified odds ratio
+
+The relationship between office temperature and head colds is tested for smokers and nonsmokers. Since smoking is assumed to be a confounding factor in this relationship, use a Mantel-Haenszel chi-square for stratified tables to analyze the two tables here:
+
+```{r,eval=FALSE}
+Smokers
+          Colds   No Colds
+Poor      20      100
+Good      15      150
+
+Nonsmokers
+          Colds   No Colds
+Poor      30      100
+Good      25      200
+
+```
 
 ```{r,eval=FALSE}
 data colds;
@@ -609,11 +1015,11 @@ first check if the odds ratio for the stratification categories are significantl
 
 ```{r,eval=FALSE}
 
-Breslow-Day Test for Homogeneity of Odds Ratios
-Statistic         Value
-Chi-Square        0.1501
-Degrees of Freedom (DF)   1
-P-value (Pr > ChiSq)      0.6985
+Breslow Day Test for Homogeneity of Odds Ratios
+Statistic: Value
+Chi-Square: 0.1501
+Degrees of Freedom (DF): 1
+P-value (Pr > ChiSq): 0.6985
 
 ```
 
@@ -632,7 +1038,7 @@ Statistic                         Alternative Hypothesis         DF    Value    
 
 ```
 
-reject null —-> the odds ratio for both categories is not 1.
+reject null —-\> the odds ratio for both categories is not 1.
 
 check the value of the common odds ratio
 
@@ -649,7 +1055,73 @@ Relative Risk (Col 2)   Mantel-Haenszel   0.8891      0.8283    0.9544
 
 upper and lower bounds are greater than 1 —\> with 95% the risk ratio is greater than 1 -\> there is association between poor temp and cold
 
+## Stratified odds ratio example (gender)
+
+```{r, eval=FALSE}
+DATA ABILITY;
+      INPUT GENDER $ RESULTS $ SLEEP $ COUNT;
+DATALINES;
+BOYS FAIL 1-LOW 20
+BOYS FAIL 2-HIGH 15
+BOYS PASS 1-LOW 100
+BOYS PASS 2-HIGH 150
+GIRLS FAIL 1-LOW 30
+GIRLS FAIL 2-HIGH 25
+GIRLS PASS 1-LOW 100
+GIRLS PASS 2-HIGH 200
+;
+PROC FREQ DATA=ABILITY;
+      TITLE "Mantel-Haenszel Chi-square Test";
+      TABLES GENDER*SLEEP*RESULTS/ALL; /*ALL option use with the TABLES statement requests tests and measures of association produced by CHISQ, MEASURES, and CMH options*/
+   WEIGHT COUNT;
+RUN;
+```
+
+Breslow-Day Test for Homogeneity of Odds Ratios
+
+Are the odds ratios of the stratification categories significantly different
+
+```{r,eval=FALSE}
+Breslow-Day Test for
+Homogeneity of Odds Ratios
+Chi-Square	0.1501
+DF	1
+Pr > ChiSq	0.6985
+```
+
+fail to reject the null hypothesis that the odds ratios for boys and girls are not significantly different.
+
+Cochran-Mantel-Haenszel Statistics
+
+Are the odds ratios of the stratification categories equal to 1?
+
+```{r,eval=FALSE}
+Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+Statistic	Alternative Hypothesis	DF	Value	  Prob
+1	Nonzero Correlation           	1  12.4770	0.0004
+```
+
+reject null hypothesis that the odds ratio across the stratification categories are equal to 1. The variables are associated.
+
+What is the common odds ratio and it's confidence interval
+
+```{r,eval=FALSE}
+Common Odds Ratio and Relative Risks
+Statistic	      Method	    Value	    95% Confidence Limits
+Odds Ratio	Mantel-Haenszel	2.2289    	1.4185	3.5024
+```
+
+**Conclusion:**
+
+-   The odds ratio is 2.22 and its confidence interval is 1.4185, 3.5024 We can say that we are 95% confident that the true population odds ratio is in the interval 1.4185 to 3.5024.
+
+-   We see that the lower and upper limits are above 1; thus, we can say that the odds of having exposure (low sleep) for the case group (failed test) are statistically significantly greater than the odds for the control group (passed test).
+
 ## Chi-Square given counts
+
+Can we conclude from these data at the 0.01 level of significance that the occurrence of these types of crime is dependent on the city district?
+
+As this is clearly not a 2x2 table --\> chi-square no odds ratio
 
 ```{r,eval=FALSE}
 data crimes; 
@@ -702,7 +1174,9 @@ predictor_2       responce_1
 ```
 
 if given the raw data, use proc freq to find the frequencies of the variable category occurrences and run the chi square from that
+
 ```{r,eval=FALSE}
+
 proc import datafile="/home/u63989204/Midterm 1/Module 5/Module_5_Homework/Homework 5 data.xlsx"
 dbms=xlsx 
 out = hw_five replace;
@@ -715,7 +1189,8 @@ proc freq data=hw_five;
 run;
 ```
 
-or just convert it to cvs 
+or just convert it to cvs
+
 ```{r, eval=FALSE}
 DATA CLIMATE;
 INFILE 'your file location/Homework 5 data.csv' DLM = ',' FIRSTOBS=2;
@@ -727,7 +1202,6 @@ TITLE "Relationship between grade level and opinion";
 TABLES GL*OPINION/CHISQ;
 RUN;
 ```
-
 
 ## chi square for trend
 
@@ -807,7 +1281,185 @@ therefore reject the null hypothesis that the variables are independent.
 
 ```
 
+## chi-square on un-tabulated input
+
+```{r, eval=FALSE}
+DATA GENDER;
+   INPUT SEX $ PASS $;
+DATALINES;
+M YES         
+F NO
+F YES
+M NO
+F YES
+M NO
+M YES
+F YES
+F NO
+M NO
+M NO
+F NO
+M YES
+M YES
+M YES
+F YES
+M NO
+;
+
+
+PROC FREQ DATA=GENDER;
+   TABLES SEX*PASS / CHISQ;
+RUN;
+```
+
 # Module 6
+
+## t-tests
+
+## Independent vs Paired t-tests
+
+```{r, eval=FALSE}
+*Perform a paired t-test comparing before and after values.
+Analyze these data as if the values were not paired. How do the p-values compare?;
+
+data south_beach;
+do subject = 1 to 12;
+	input weight_before weight_after @@;
+	output;
+end;
+datalines; 
+300 290 350 331 190 200 400 395 244 240 321 300
+330 332 250 242 190 185 160 158 260 256 240 220
+;
+run;
+
+*the paired t-test produces a qq-difference plot that demonstraights normality of 
+the data set. 
+
+*paired t-test, 2-sided test 
+H0: mu_after = mu_before
+H1: mu_after != mu_before;
+
+PROC TTEST DATA=south_beach;
+title "Jacob Richards - 2 sided test";
+PAIRED weight_before*weight_after;
+RUN;
+
+* The results of the t sided paired t-test were:
+DF 	t Value 	Pr > |t|
+11 	 -2.69 	     0.0212
+
+The resuting p value is 0.0212 which is less than 0.05, therfore it is statistically signifigant 
+We therefore reject the null hypothesis and tentativly conclude that the group means are not equal. 
+
+
+*un-paired, independent 2-sided t-test;
+
+
+DATA south_beach_independent;
+ SET south_beach;
+ time = 'BEFORE';
+ weight = weight_before;
+ OUTPUT;
+ time = 'AFTER';
+ weight = weight_after;
+ OUTPUT;
+ KEEP time weight;
+RUN;
+
+
+proc ttest data=south_beach_independent;
+class time;
+var weight;
+run;
+
+*the results of the independent t-test produces qq plots for both data sets and 
+demonstraights normal distribution for both of them. 
+
+*The results of the independent t-test were very different
+
+Equality of Variances
+ F Value 	Pr > F
+ 1.09 	    0.8940
+ 
+*Pr > F is 0.8940 which is greater than 0.05 --> pooled results 
+Method 	Variances 	DF 	t Value 	Pr > |t|
+Pooled 	Equal 	    22 	 -0.25 	     0.8064
+
+The P value obtained is 0.8064 which is far greater than 0.05 and therefore the test is statistically insignifigant 
+we therfore fail to reject the null hypothesis that the group means are equal. 
+
+
+when performing the paired t test the p value obtained was 0.0212 vs the independent t test p value was 0.8064
+
+This actually makes perfect sense, as within a normal distribution of weights and a sample size of 12, such a small difference in 
+means (about 7) would be not be unlikley at all. However if these were the same subjects, a difference in weight such as this 
+would very unlikely be a coicidence. 
+```
+
+**paired**
+
+1.) (Use SAS) Consider the dataset “Homework 6 data.xlsx”. It consists of 5 randomly selected student’s scores on Test 1 and Test 2 in my introductory statistics course. We want to answer 2 questions: a. First, we want to see if there was a difference in the two tests. b. Second, we want to see if there was improvement over the course of the semester. (Note: You will need to choose the correct tests to answer parts (a) and (b).);
+
+**SAS will automatically produce qq-plots for both samples which you will use to verify normality**
+
+the QQ plot this paired t-test produces verifyies the normalcy of the data sets.;
+
+```{r}
+proc import datafile="/home/u63989204/Midterm 1/Module 6/Module_6_Homework/Homework 6 data.xlsx"
+dbms=xlsx 
+out = hw_six replace;
+getnames=yes;
+option validvarname=v7;
+run;
+```
+
+a\. First, we want to see if there was a difference in the two tests.;
+
+```{r}
+PROC TTEST DATA=hw_six;
+title "Jacob Richards - two sided t-test";
+PAIRED Test_2*Test_1; #first group - second group
+RUN;
+```
+
+| **DF** | **t Value** | **Pr \> \|t\|** |
+|-------:|------------:|----------------:|
+|      4 |        2.96 |          0.0414 |
+
+Reject the null hypothesis that the difference of means of tests is equal to zero.
+
+```{r}
+PROC TTEST DATA=hw_six side=U;
+title "Jacob Richards - Upper sides t-test";
+PAIRED test_2*test_1; #first group - second group 
+RUN;
+```
+
+upper tailed test
+
+| **DF** | **t Value** | **Pr \> t** |
+|-------:|------------:|------------:|
+|      4 |        2.96 |      0.0207 |
+
+reject null differences are equal —\> conclude test 2 was better
+
+**confidence interval for mean difference of test 2 - test 1**
+
+this came from the two sided function call
+
+```{r}
+Mean	      95% CL Mean	  Std Dev	95% CL Std Dev
+9.8000	0.6167	18.9833	7.3959	4.4312	21.2527
+```
+
+with 95% confidence the mean difference of test 2 - test 1 on the upper and lower bound is greater than 0 —\> more evidnce that test 2 was better than test 1
+
+## ANOVA - SNK - data input
+
+-   Continuous dependent variable.
+
+-   Categorical independent variable that classifies observations into two or more groups.
 
 ```{r,eval=FALSE}
 data balls;
@@ -844,7 +1496,7 @@ PROC ANOVA DATA=balls;
 RUN;
 ```
 
-ANOVA RESULTS:
+RESULTS:
 
 +------------+----------+--------------------+-----------------+-------------+-------------+
 | **Source** | **DF**   | **Sum of Squares** | **Mean Square** | **F Value** | **Pr \> F** |
@@ -866,9 +1518,11 @@ and the means of P_new and W_new are not significantly different
 
 ## ANOVA formatted data input (cholesterol medication)
 
-\*Two cholesterol-lowering medications (statins) and a placebo were given to each of 10 volunteers with total cholesterol readings of 240 or higher. After 6 weeks, the foUowing total cholesterol values were recorded Create a SAS data set by reading these data.;
+\*Two cholesterol-lowering medications (statins) and a placebo were given to each of 10 volunteers with total cholesterol readings of 240 or higher. After 6 weeks, the following total cholesterol values were recorded Create a SAS data set by reading these data.;
 
 the data is given such that each line is the data samples for each of the three groups
+
+3 groups —\> anova instead of t-test
 
 ```{r,eval=FALSE}
 data blood_med;
@@ -903,11 +1557,11 @@ RUN;
 
 H0 = The means are equal.
 
-h1 = Not all the means are equal.
+h1 = Not all the means are equal. (at least one mean is different than the others)
 
 The test statistic obtained has a p value of less than 0.0001 which is less than 0.05 and is therefore statistically significant. We therefore reject the null hypothesis and tentatively conclude that at least one of the group means of cholesterol is significantly different than the others.
 
-**SNK test results**
+**SNK test (**Student-Newman-Keuls multiple-comparison test) **results**
 
 the means:
 
@@ -917,7 +1571,11 @@ aswell that the means for statin A and Statin B are not significantly different.
 
 ## anova - SNK - contrast (study methods)
 
-DATA SET:
+Four different methods of preparing for a college entrance exam were compared. They are labeled 'A', 'B', 'C', and 'D'. The following exam scores were obtained for each of the four programs:;
+
+\*Compare the four preparation methods. Use a multiple-comparison method of your choice to make pairwise comparisons.
+
+Create two contrasts: One to compare methods A and B to C and D, the other to compare method D to the other three.;
 
 ```{r,eval=FALSE}
 data study_methods;
@@ -1014,7 +1672,7 @@ CONTRAST 'A B AND C VS. D' PROGRAM -1 -1 -1 3;
 RUN;
 ```
 
-## anova - SNK - contrast : formatted data input (reading scores)
+## anova - SNK - contrast (reading scores)
 
 DATA:
 
@@ -1026,6 +1684,7 @@ X 700   X 850   X 820   X 640   X 920
 Y 480   Y 460   Y 500   Y 570   Y 580
 Z 500   Z 550   Z 480   Z 600   Z 610
 ;
+run;
 ```
 
 **ANOVA TEST**
@@ -1047,7 +1706,27 @@ RUN;
 | **Model**  | 2        | 215613.3333        | 107806.6667     | 16.78       | 0.0003      |
 +------------+----------+--------------------+-----------------+-------------+-------------+
 
+-   The F-value was 16.78 (df = 2, 12, p = 0.0003).
+
+-   Reject the null hypothesis
+
+-   There is at least one group mean different from one other group mean, but cannot be sure which one(s) are different.
+
+-   The reading-instruction methods were not all equivalent
+
+    **SNK TEST RESULTS**
+
+    X \> Y & Z , Y = Z
+
 **CONTRAST TEST**
+
+suppose that x is a new method and y and z are traditional ones
+
+we are testing x to y and z by H0: 2mu(x) - mu(y) - mu(z) = 0
+
+and y and z the same way
+
+so groups X Y Z –\> CONTRASTS: 2 -1 -1 and 0 -1 1
 
 ```{r,eval=FALSE}
 PROC GLM DATA=READING;
@@ -1069,6 +1748,274 @@ RUN;
 +-------------------+----------+-----------------+-----------------+-------------+-------------+
 | **METHOD Y VS Z** | 1        | 2250.0000       | 2250.0000       | 0.35        | 0.5649      |
 +-------------------+----------+-----------------+-----------------+-------------+-------------+
+
+Notice that the method X is shown to be significantly different from methods Y and Z combined, and there is no difference between methods Y and Z at the 0.05 level.
+
+## Wilcox Rank sum test
+
+```{r,eval=FALSE}
+*# Nonparametric (distribution-free tests);
+DATA TUMOR;
+   INPUT GROUP $ MASS @@;
+DATALINES;
+A 3.1 A 2.2 A 1.7 A 2.7 A 2.5
+B 0.0 B 0.0 B 1.0 B 2.3
+;
+PROC NPAR1WAY DATA=TUMOR WILCOXON MEDIAN; /#PROC NPAR1WAY performs the nonparametric tests#/
+/#The option WILCOXON requests the Wilcoxon rank-sum test#/
+/#MEDIAN option requests an analysis of median scores. When there are two classification levels, this option produces the two-sample median test.#/
+   TITLE "Nonparametric Test to Compare Tumor Masses";
+   CLASS GROUP; /#The CLASS statement, which is required, names one and only one classification variable. The variable can be character or numeric. The CLASS variable identifies groups (or samples) in the data#/
+   VAR MASS; /#The VAR statement names the response or dependent variables to be included in the analysis. These variables must be numeric.#/
+   EXACT WILCOXON; /#The EXACT statement computes exact p-values in addition to the asymptotic approximations usually computed. Used when we have relatively small sample sizes#/
+RUN;
+```
+
+and the options for it
+
+```{r,eval=FALSE}
+PROC NPAR1WAY DATA=SAS-data-set WILCOXON MEDIAN; /*PROC NPAR1WAY performs the nonparametric tests; The option WILCOXON requests the Wilcoxon rank-sum test; The MEDIAN option requests the median test. */ 
+  CLASS variable; /*The CLASS statement names one and only one classification variable.*/
+  VAR variables; /*The VAR statement names the response variables to be included in the analysis*/ 
+  EXACT test-keyword; /*The EXACT statement computes exact p-values in addition to the asymptotic approximations usually computed. Used when we have relatively small sample sizes*/ 
+RUN;
+```
+
+# Module 7
+
+-   Data points (x,y) are naturally paired samples as x and y come from the same observation
+
+## Pearson Correlation Coefficient
+
+### Proc corr - options
+
+will produce matrix of pearson corr coef's with pvalue directly beneath it, all var variables will be the rows and columns so the main diagonal will be all 1's.
+
+```{r,eval=FALSE}
+PROC CORR DATA= fitness NOSIMPLE;  #change to PROC CORR DATA= fitness NOSIMPLE; to only get corr coef and p-value or replace "NOSIMPLE" with RANK
+    VAR Oxygen_Consumption Runtime; #2x2 matrix produced by only var variables inputted
+RUN;
+```
+
+### Proc corr - correlation coeffient matrix
+
+will produce matrix of cooraltion coeficients, rows = with, columns = vards, with output in order of rank corr coef largest to least
+
+```{r,eval=FALSE}
+PROC CORR DATA= fitness RANK;
+  VAR Runtime Age Weight Run_Pulse Rest_Pulse Maximum_Pulse Performance; # 1x7 corr coef matrix will also print simple statistics
+  WITH Oxygen_Consumption;
+RUN;
+
+PROC CORR DATA= fitness NOSIMPLE;
+  VAR Runtime Age Weight Run_Pulse Rest_Pulse Maximum_Pulse Performance; # 7x7 corr coef matrix, no statistics, only corr coef and p-values 
+RUN;
+```
+
+### Pearson product-moment and Spearman rank-order correlation
+
+```{r,eval=FALSE}
+DATA spearcc;
+  INPUT X Y XRank YRank;
+  DATALINES;
+   1  1  1 1
+   3  2  2 2
+   7  3  3 3
+   9  6  4 4
+  11  8  5 5
+;
+RUN;
+PROC CORR DATA=spearcc 
+PEARSON /*Requests Pearson product-moment correlation  */
+SPEARMAN /*Requests Spearman rank-order correlation */    NOSIMPLE 
+NOPROB /*Suppresses p-values */; 
+RUN;
+```
+
+### partial cooralation option
+
+```{r,eval=FALSE}
+PROC CORR DATA=fitness;
+  VAR Oxygen_Consumption Runtime Run_Pulse Rest_Pulse Maximum_Pulse Age Weight; 
+  PARTIAL Performance; #*The PARTIAL statement lists variables to use in the calculation of partial correlation statistics.*/
+RUN;        
+```
+
+output: the p-values are testing H0: population corr coef = 0
+
+```{r,eval=FALSE}
+Pearson Correlation Coefficients, N = 31
+                        Prob > |r| under H0: Rho=0
+Oxygen_Consumption   Performance        Runtime      Rest_Pulse
+                         0.86377       -0.86219        -0.39935
+
+         PVALUE          <.0001         <.0001          0.0260
+
+Oxygen_Consumption     Run_Pulse          Age     Maximum_Pulse
+                        -0.39808       -0.31162        -0.23677
+        PVALUE           0.0266         0.0879          0.1997
+
+Oxygen_Consumption        Weight
+                        -0.16289
+            PVALUE       0.3813
+
+```
+
+```{r,eval=FALSE}
+± 1.00 	Perfect Correlation
+± 0.80 	Strong Correlation
+± 0.50 	Moderate Correlation
+± 0.20 	Weak Correlation
+± 0.00 	No Correlation
+```
+
+### R-square - aka coef of determination
+
+is just the (pearson correlation coef)\^2 variables corresponding to signifigant R\^2 p-values have a significant linear correlation between each other.
+
+## Regression
+
+### conditions of regression analysis validity
+
+assumptions for regression model
+
+```{r,eval=FALSE}
+The errors have a mean of 0 at each value of the independent variable.
+The errors have the same variance at each value of the independent variable.
+The errors are independent.
+The errors are normally distributed (for confidence intervals and tests).
+```
+
+Plots to verify assumptions: Residuals vs. Predicted (predicted responce variable by the model) Residuals vs. (Observed Values of the Independent Variable, used to produce model) Studentized Residuals vs. (Observed Values of the IndependentVariable) (OBS) Residual by QQ plot
+
+```{r,eval=FALSE}
+GOPTIONS RESET=ALL;
+PROC REG DATA= fitness;
+MODEL Oxygen_Consumption=Performance;
+ PLOT R.*(P. Performance); #R. will plot residual for *(P. Performance) [the P. is response estimate from the model, and Performance is actual predictor variable]
+PLOT STUDENT.*OBS. / #(STUDENT. will divide residuals by standard errors and *OBS. is what it will be plotted by as number of observations
+VREF=3 2 -2 -3 #refrence lines for studentized residuals
+VAXIS=-4 TO 4 BY 1 #upper and lower bounds of studnized residual plot 
+HAXIS=0 TO 32 BY 1; # left and right bounds of the studentized residual plot 
+PLOT RESIDUAL.* NQQ.; # residual by qq plot 
+SYMBOL V=DOT;
+TITLE "Plots Of Diagnostic Statistics";
+RUN;
+QUIT;
+```
+
+Plot of residuals vs. predicted values of Oxygen_Consumption (dependent variable)
+
+-   randomly scattered about the reference line at 0
+-   no apparent trends or patterns
+-   check
+
+Plot of residuals vs. observed values of Performance (independent variable)
+
+Since residuals scatter around 0, we can verify the assumption:
+
+-   Have a mean of 0 at each value of the independent variable.
+-   Because of no apparent trends or patterns in the residuals, we can verify the assumption:
+-   Have the same variance at each value of the independent variable.
+-   check
+
+Studentized Residuals vs. actual predictor values given to produce regression line (observed values of Performance (independent variable))
+
+-   produce studentship residuals vs observation number
+-   no unusually large residuals -\> check
+-   produce residuals vs normal quantiles
+-   straight qq line --\> normal -\> check
+
+### Proc Reg - with fitted model
+
+don't forget to check the signifgance levels of intercept and coef of regression model
+
+```{r,eval=FALSE}
+GOPTIONS RESET=ALL FTEXT='ARIAL/BO' GUNIT=PCT HTEXT=3;
+#The PROC REG statement is used when you want to fit a model to the data, you must also use a MODEL statement;
+PROC REG DATA=fitness;  
+  MODEL Oxygen_Consumption = Performance/ CLB ALPHA=0.01;
+#MODEL dependent variable(s)= independent-variables/ options;
+#CLB: computes 100(1-a) % confidence limits for the parameter estimates;
+#ALPHA= option sets significance value for confidence and prediction intervals and tests;
+  PLOT Oxygen_Consumption*Performance;
+#The PLOT statement in PROC REG displays scatter plots with y variable on the vertical axis, x variable on the horizontal axis, and the regression line;
+  SYMBOL V=DOT H=1.5 CV=RED W=2 CI=BLACK ;
+RUN;
+QUIT;
+```
+
+### Proc Reg - Need Predictions with confidence interval
+
+```{r,eval=FALSE}
+proc import datafile="/home/u63989204/Module 7/Module 7 Labs/muscle.txt"
+dbms=dlm
+out = work.muscle_and_age replace;
+getnames=yes;
+option validvarname=v7;
+run;
+
+proc contents data=work.muscle_and_age;
+run;
+
+data muscle;
+set work.muscle_and_age;
+run;
+
+DATA NEEDEDPREDICTIONS;
+INPUT AGE @@;
+DATALINES;
+66 40
+;
+
+RUN;
+DATA PREDICT;
+SET MUSCLE NEEDEDPREDICTIONS;
+RUN;
+PROC REG DATA=PREDICT;
+MODEL MASS=AGE / P CLM ALPHA=0.02; 
+#muscle mass of a 40 year old, that means all of them, not just an individual, think about it. the mean interval would 
+#be tighter than the individual one 
+RUN;
+```
+
+### Proc Reg - comparing goodness of fit for transformed variable linear model
+
+```{r,eval=FALSE}
+data dose_response;
+input dose systolic diastolic;
+log_dose = LOG(dose);
+datalines;
+4 180 110
+4 190 108
+4 178 100
+8 170 100
+8 180 98
+8 168 88
+16 160 80
+16 172 86
+16 170 86
+32 140 80
+32 130 72
+32 128 70
+;
+
+PROC REG DATA = dose_response;
+    MODEL systolic = log_dose;
+    plot systolic*log_dose;
+    MODEL diastolic = log_dose;
+    plot diastolic*log_dose;
+RUN;
+
+PROC REG DATA=dose_response;
+   MODEL systolic = log_dose;  #replace with MODEL systolic = log_dose / NOPRINT; if only want the plot
+   PLOT RESIDUAL.*log_dose; 
+   MODEL diastolic = log_dose;
+   PLOT RESIDUAL.*log_dose; 
+RUN;
+```
+
+in examination of the adjusted r-square, the non transformed predictor variable was better for Systolic blood pressure and the natural logarithim LOG() was better for Diastolic blood pressure
 
 # Module 9
 
@@ -1106,6 +2053,292 @@ cumprod(x)
 # Output: [1]  1  2  6 24
 
 ```
+
+```{r}
+
+
+####### Some basic math functions: ########
+
+# abs 			     Absolute Value
+# ceiling 		   Next Larger Integer
+# floor 		     Next Smallest Integer
+# cos, sin, tan  Trigonometric Functions
+# exp(x) 	       e^x  [e = 2.71828 ?]
+# log 			     Natural Logarithm
+# log10 		     Logarithm Base 10
+# sqrt 			     Square Root
+# length 	       Length of Object, how many elements in the object
+# prod 		       Product of Values
+# sum 		       Sum
+# rev 		       Put Values of Vectors in Reverse Order
+# sort 		       Sort Values of Vector
+# order 	       Permutation of Elements to Produce Sorted Order
+# rank 		       Ranks of Values in Vector
+# match 	       Detect Occurrences in a Vector x[match(x,y)] == x[x %in% y] == intersect(x,y)
+# cumsum 	       Cumulative Sums of Values in Vector
+# cumprod 	     Cumulative Products
+
+sqrt(a*pi)
+log(a,3)  # log( x, base)   computes the log of x with base b
+log1p(a)  # computes log(1+a)
+log2(a)   # computes the log base 2 of a
+log(100, base=10)   # one easy way to do it
+
+# There are more options
+exp(a)    # computes the exponential of a
+log(a,b)
+logb(2,4)
+
+# Tricky example dealing with rounding issues
+(1/49)*49
+(1/49)*49==1  # what is the problem?
+(1/49)*49-1  # rounding errors
+eps<- 1e-12# to set the maximum difference allowed
+abs((1/49)*49-1)<=eps
+
+#trig functions
+x<-1
+sin(x)   # finds the sine of each element of x
+sin(x)^2
+sin(x)^2+cos(x)^2
+
+
+# Although there are lots of built in functions in R, sometimes, you might need to create your own
+power<-function(x)
+{
+  power2<-x^2
+  power3<-x^3
+  return(list("sqr"=power2,"cub"= power3))
+}
+power(4)
+power(4)$sqr
+
+sqrt(-3)   # NaN is shown when value undefined or missing
+
+# On inequalities 
+sign <-(x<0) # returns a logical the values of x that are negative
+sign
+
+x <- c(-1:5, 1)
+sign<-(x<0)
+sign
+
+```
+
+```{r}
+######## creating sequences and vectors #######
+
+x<-1:10  # creates regular sequence between 1 and 10
+length(x)
+x[2] # captures the 2nd element of x
+x[-2] # removes 2nd element from x
+
+seq(1,10, by=1) # another method to do it
+seq(0,2, length=10)  # creates a sequence of 10 numbers from 0 to 2
+10:1 # is another way
+-10:1
+x<-c(x,11) # takes x, adds 11 to it, and replaces x by it
+x<-c(x, c(12,13)) # takes x and adds another vector c(12, 13)
+x[3]  # to obtain the 3rd element of x
+x[-3]  # to delete the 3rd element of x
+x[3:7] # to obtain the those elements with position from 3 to 7
+x[-c(3:7)]  # delete all those positions, and give the others
+
+x[x>3]
+x[ x< -2 | x > 2] # values less than -2 or greater than 2 
+# use & for and.
+
+which(x == max(x)) # gives the largest value index for x
+
+# Some useful functions associated with any vector
+x  # let's thing of this as x(1), x(2), ..., x(15)
+x/2
+c(1,2,3,4)+c(5,6)
+c(1,2,3,4)+c(5,6,7,8)
+length(x)   # it will be 13
+x[-1] # we know this one
+x[-1]-x[-length(x)] #  delete x[-1] as a vector with x[-length(x)]
+x[-length(x)]
+a=6
+b=6
+a==b  # Do we have a equals b?
+a<b
+a>b
+a<=b
+rm(a)
+
+
+y<-seq(1,3,0.1) # creates a sequence from 1 to 3 with a 0.1 increment
+
+chardata=c("w", "a", "b", "c")
+chardata
+is.numeric(chardata)  # way to check if data is numeric or not
+chardata>"a"     # alphabetic inequality
+chardata[chardata>"a"]
+length(chardata[chardata>"a"])
+mode(chardata)
+
+x<-1:10 # creates a set of numbers, not a vector yet 
+x
+dim(x)  # dimenson does not exist yet
+dim(x)<-c(2,5)  # creates a vector or rather a 2 by 5 matrix
+x # is a matrix filled by row, not by column
+#  To do that, let's change x back to a sequence and use the matrix function
+x<-1:10
+x<-matrix(x,2,5)
+x
+z<-as.vector(x)
+z
+w<-matrix(x,2,5, byrow=T)
+w
+dim(w)<-c(3,5) # error message
+x
+x[2,3]
+x[,3] # to access the 3rd column
+x[,-3] # everything except the 3rd column
+x[, c(2,5)]    # gives the 2nd and 5th column
+x[2,c(2,5)]      # gives the intersection of 2nd row, and the 2nd and 5th column
+x<-cbind(x,c(11:12))  # add another column, adjoin column
+x
+x<-rbind(x,13:18) # allows to adjoin row
+x
+t(x)  # to get the transpose of x
+apply(x,1,mean) # gives mean of each row
+apply(x,2,mean)  # gives the mean of each column
+
+
+jsum<-function(x)
+{
+  jsum<-0
+  for (i in 1:length(x)) {
+  	jsum<-jsum+x[i]
+  }
+  return(jsum)
+} 
+x=c(2, 3, 50)
+jsum(x)
+
+######### MATRICES ###########
+
+# matrices are like data frames but all entries must be same type
+
+# create a matrix with 3 rows and 3 columns
+
+matrix(0, 3, 3)
+matrix(1, 3, 3)
+diag(3)
+diag(c(1, 2, 4), 3)
+
+# store the matrix
+x <- matrix(0, 5, 3)
+
+# column major order by default
+y <- matrix(0:8, 3, 3)
+y
+diag(y)
+sum(diag(y))  #trace
+
+z <- matrix(0:8, 3, 3, byrow=TRUE)
+z
+
+# scalar multiplication
+2*y
+
+# matrix multiplication vs elementwise multiplication
+y * z    #elementwise multiplication
+y %*% z  #matrix multiplication
+
+# extract elements, rows or columns
+z[3,2]
+z[ ,2]   #second row
+z[ ,2:3] #rows 2 and 3
+
+a <- iris[1:5, 1:4]  #is it a matrix?
+a
+is.matrix(a)
+colMeans(a)
+
+matplot(iris[, 1:4])
+
+
+######### Matrix Operations ##########
+
+x <- matrix(rnorm(9) , 3, 3)
+x
+solve(x)   #inverse
+det(x)     #determinant
+eigen(x)   #eigen-decomposition
+svd(x)     #singular value decomposition
+
+e <- eigen(x)
+e$values
+v <- e$vectors
+t(v) %*% x %*% v
+
+y <- t(x) %*% x
+qr(y)       #QR factorization
+chol(y)     #Choleski factorization
+svd(y)      #singular value decomposition
+
+e <- eigen(y)
+e
+diag(e$values)
+
+v <- e$vectors
+t(v) %*% y %*% v
+round(t(v) %*% y %*% v, 5)
+
+# Let's look at more about matrices
+a<-matrix(c(1,2,3,4),2,2)
+b<-matrix(c(5,6,7,8),2,2)
+det(a)
+t(a) # gives the transpose of a
+a%*%b # is the product
+eigen(a)
+?solve
+solve(a) # gives the inverse of the matrix
+# Choleski decomposition is obtained by taking 'chol(a)'
+# The QR decomposition is obtained from 'qr(a)'
+solve(a,b) # find a matrix c such that a*c=b
+crossprod(a)
+crossprod(a,b)
+dim(a)
+apply(a,1,sum)
+apply(a,2,sum)
+apply(a,c(1,2),sum)
+
+
+```
+
+**just a good indexing tip**
+
+difference between %in% and == operators x %in% y the index within x of which somewhere in the vector why is the same value
+
+x == y component by component x[i] == y[i]
+
+therefore x[x %in% y] is equivalent to intersect(x,y)
+
+```{r,eval=FALSE}
+> x <- c('a','b','c')
+> y <- c('c', 'b', 'a')
+> x == y
+[1] FALSE  TRUE FALSE
+
+> x %in% y
+[1] TRUE TRUE TRUE
+
+> x %in% letters
+[1] TRUE TRUE TRUE
+
+> letters %in% x
+ [1]  TRUE  TRUE  TRUE FALSE FALSE FALSE
+ [7] FALSE FALSE FALSE FALSE FALSE FALSE
+[13] FALSE FALSE FALSE FALSE FALSE FALSE
+[19] FALSE FALSE FALSE FALSE FALSE FALSE
+[25] FALSE FALSE
+```
+
+## 
 
 # Module 10
 
@@ -2247,7 +3480,24 @@ right
 
 # Module 14
 
-## t-tests, Wilcox (one sample)
+## CHECK NORMALITY FIRST 
+
+## t-tests, Wilcox - one sample
+
+remember, you always have to verify normality to know weither to continue with the t-test or if you have to resort to Wilcox
+
+```{r}
+qqnorm(trees$Height)
+qqline(trees$Height, lty = 2)
+```
+
+this looks a little suspicious, lets check the Shapiro test
+
+```{r}
+shapiro.test(trees$Height)
+```
+
+fail to reject the null hypothesis that it's normal.
 
 one sample - two sided
 
@@ -2269,7 +3519,12 @@ change the confidence level on the mean confidence interval
 t.test(trees$Height, mu = 70,conf.level = 0.99)
 ```
 
-whenever normality cannot be assumed use wilcox rank sum test
+```         
+99 percent confidence interval:
+ 72.85287     79.14713
+```
+
+whenever normality cannot be assumed use Wilcox rank sum test
 
 the function call is exactly the same as for t-tests
 
@@ -2279,22 +3534,9 @@ wilcox.test(trees$Height, mu = 70, alternative = "greater") # sample is greater 
 wilcox.test(trees$Height, mu = 70, alternative = "less")  # sample is less than mu 
 ```
 
-## hypothesis test normality assumption verification
+## t-tests,  Wilcox - 2 sample independent - Variance test
 
-```{r}
-qqnorm(trees$Height)
-qqline(trees$Height, lty = 2)
-```
-
-this looks a little suspicious, lets check the Shapiro test
-
-```{r}
-shapiro.test(trees$Height)
-```
-
-fail to reject the null hypothesis that it's normal.
-
-## t-tests - Wilcox - 2 sample independent - Variance test
+A two-sample t-test is used to test the null hypothesis that the two samples come from distributions with the same mean (i.e., the means are not different).
 
 **DATA HAS TO BE IN LONG FORMAT - might have to clean data**
 
@@ -2304,13 +3546,47 @@ test <- read.csv(file="hypothesis.csv",header=TRUE)
 
 test$id <- seq(1:nrow(test))
 test
+```
+
+check normality
+
+```{r}
+qqnorm(test$Aspirin)
+qqline(test$Aspirin, lty = 2)
+
+qqnorm(test$Tylenol)
+qqline(test$Tylenol, lty = 2)
+
+#they're normal proceed with t-test
+```
+
+```{r}
 library(reshape2)
 long_data <- melt(data = test, id.vars = c("id"),
                    measured.vars = c("Aspirin", "Tylenol"),
                    variable.name = "Brand", value.name = "Time")
 long_data
-t.test(long_data$Time ~ long_data$Brand)
 ```
+
+```{r}
+var.test(long_data$Time ~ long_data$Brand)
+#H0: variances are equal
+#H1:  true ratio of variances is not equal to 1
+# p-value = 0.46 
+```
+
+```{r}
+t.test(long_data$Time ~ long_data$Brand, var.equal=TRUE) #default variances are not equal
+```
+
+notice that the 95% confidence interval for difference of means from the test contains zero verifying the result of fail to reject null hypothesis
+
+```         
+95 percent confidence interval:
+ -1.529204 21.195871
+```
+
+## **2 sample independent t-test - Another example**
 
 H0: the two samples come from distributions with the same mean
 
@@ -2325,17 +3601,17 @@ atmos
 t.test(atmos$moisture ~ atmos$treatment)
 ```
 
-if you happen to be sure that the variances of the samples are equal
-
-```{r}
-t.test(atmos$moisture ~ atmos$treatment, var.equal = TRUE) #so in this context 
-```
-
-to verify assumption that variances are unequal - cannot use this with data that is not normal.
+check variances and normality
 
 ```{r}
 var.test(atmos$moisture ~ atmos$treatment)
 #H0: the varainces are equal, p-value = 0.4282 --> fail to reject null --> the variances are equal 
+```
+
+if you happen to be sure that the variances of the samples are equal
+
+```{r}
+t.test(atmos$moisture ~ atmos$treatment, var.equal = TRUE) #so in this context 
 ```
 
 just the same you can use Wilcox for 2 sample tests for data you cant assume normality on
@@ -2392,9 +3668,11 @@ wilcox.test(long$scores ~ long$ID, alternative = "greater")
 
 Reject null —\> Player 1 is better than Player 2
 
-## t-test Wilcox paired
+## t-test,  Wilcox paired
 
 **DATA HAS TO BE IN WIDE FORMAT**
+
+**DO NOT NEED TO CHECK IF VARIANCES ARE EQUAL**
 
 Paired data are where there are two measurements on the same experimental unit (individual, site, etc.) For example, the `pollution` dataset gives the biodiversity score of aquatic invertebrates collected using kick samples in 17 different rivers. These data are paired because two samples were taken on each river, one upstream of a paper mill and one downstream. Each individual observation pair originated from the same place.
 
@@ -2429,6 +3707,15 @@ Was there improvement over the course of the semester. H0: Test 2 - Test 1 \> 0
 t.test(HW_6$Test.2, HW_6$Test.1, paired = TRUE, alternative = "greater")
 ```
 
+## Wilcoxon test 
+
+```{r}
+library(coin)
+wilcox_test(Time ~ Brand, data = long_data, distribution = "exact")
+```
+
+You use an Exact Wilcoxon-Mann-Whitney Test, also known as the "Exact Mann-Whitney U test," **when comparing two independent groups on a continuous or ordinal variable, especially when the data is not normally distributed, has a small sample size, or when you want a precise calculation of the p-value, particularly when dealing with very small sample sizes where the normal approximation might not be reliable**. 
+
 ## Proportion test
 
 advertising campaign counts of those would and would not buy are taken before and after - this is a proportions test - they applied a treatment
@@ -2455,12 +3742,12 @@ There is no evidence to support that the advertising campaign has changed cat ow
 
 ## Chi-square
 
-Test whether the number of cat owners buying the cat food is independent of the advertising campaign.
+Test whether the number of cat owners buying the cat food is independent of the advertising campaign. This is not a contingency table, the company ran the campaign.
 
-same thing but perform a chi-square test for independence rather than difference of proportion, in this context those are the same thing
+same thing but perform a chi-square test for independence rather than difference of proportion, in this when 2x2 those are the same thing
 
 ```{r}
-buyers <- matrix(c(45, 35, 71, 32), nrow = 2)
+buyers <- matrix(c(45, 71, 35, 32), nrow = 2, byrow=TRUE)
 chisq.test(buyers)
 ```
 
@@ -2503,6 +3790,7 @@ these values are only meaningful under the assumption of linear relationships
 
 ```{r}
 cor(trees$Height, trees$Volume) #select specific variables 
+cor.test(trees$Height, trees$Volume) #test that they are statistically signifignat
 
 cor(trees) #or produce a matrix of the coef's 
 
@@ -2561,7 +3849,18 @@ produce model
 setwd("~/Desktop/Personal_save/Stat_405_Module_14/Module_14_Homework")
 smoke <- read.table(file="smoking.txt",header=TRUE) 
 smoke_lm <- lm(mortality ~ smoking, data=smoke)
-summary(smoke_lm)
+summary(smoke_lm) #check for significance of coeficient's 
+anova(smoke_lm) #this is a condensed form of an anova table, signifigant p-value of F statistic - model is signifigant
+```
+
+```         
+          Pr(>|t|)  
+Intercept  0.901  --> fail to reject = 0 
+smoking   5.66e-05 *** --> reject -> signifigant relationship
+
+
+R^2 0.4918 
+F-statistic:  p-value: 5.658e-05 --> the variable are not independent
 ```
 
 plot with data and correlation coefficient
@@ -2571,13 +3870,6 @@ slope_intercept <- coefficients(smoke_lm)
 plot(mortality ~ smoking,data=smoke)
 abline(a=slope_intercept[1],slope_intercept[2])
 cor(y=smoke$mortality, x=smoke$smoking)
-```
-
-summary of model
-
-```{r}
-summary(smoke_lm) #check for significance of coeficient's 
-anova(smoke_lm) #this is a condensed form of an anova table, signifigant p-value of F statistic - model is signifigant
 ```
 
 ### prediction and confidence interval
@@ -2595,10 +3887,13 @@ CI_predicted_smoke_120
 **Plot the model**
 
 ```{r}
+library(ggplot2)
 ggplot(mapping = aes(x = smoking, y = mortality), data = smoke) + geom_point() + geom_smooth(method = "lm", se = TRUE)
 ```
 
 **1.) residuals by the response values produced by the model (fitted values)**
+
+known as equal variances (homogeneity of variance)
 
 ```{r}
 smoke_res <- resid(smoke_lm) 
@@ -2695,7 +3990,7 @@ linear model with categorical variable as predictor will compute anova test
 Example: test is significant —\> reject null, the groups are different
 
 ```{r}
-# this will evaluate an anova test 
+# this will evaluate an anova test
 smoke_anova_lm <- lm(mortality ~ risk.group, data=smoke)
 
 # this will print the anova table of the test 
@@ -2741,6 +4036,8 @@ risk.groupmedium   -27.55       6.90  -3.992 0.000615 *** # risk.groupmedium - r
   
 
 ```
+
+Conclusion: the group means are in-equal, specifically, none of the groups are equal with any other group.
 
 Example where the test is not significant
 
