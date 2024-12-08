@@ -3388,6 +3388,7 @@ the_length. Make sure we gather all columns but name, using -name. Note the NAs 
 
 ```{r}
 wide
+library(tidyverse)
 
 long <- wide %>%
     pivot_longer(cols = -name, names_to = "lanytype", values_to = "the_length",values_drop_na = TRUE)
@@ -3416,6 +3417,8 @@ crash2 <- crash2 %>%
      separate(col=Road, into = c("type", "number"))
 
 table(crash2$type)
+
+
 
 crash2 <- crash2 %>%
           unite(road_hyphen, type, number, sep = "-")
@@ -3465,22 +3468,22 @@ merged
 
 ```{r}
 full <- full_join(road,crash)
-full
+(nrow(full))
 ```
 
 ```{r}
 left <- left_join(road,crash)
-left
+(nrow(left))
 ```
 
 ```{r}
 right <- right_join(road,crash, by="Road") #in case there are more than 1 common variables but you want to use one as the key instead of the other. 
-right
+(nrow(right))
 ```
 
 # Module 14
 
-## CHECK NORMALITY FIRST 
+## CHECK NORMALITY FIRST
 
 ## t-tests, Wilcox - one sample
 
@@ -3534,7 +3537,7 @@ wilcox.test(trees$Height, mu = 70, alternative = "greater") # sample is greater 
 wilcox.test(trees$Height, mu = 70, alternative = "less")  # sample is less than mu 
 ```
 
-## t-tests,  Wilcox - 2 sample independent - Variance test
+## t-tests, Wilcox - 2 sample independent - Variance test
 
 A two-sample t-test is used to test the null hypothesis that the two samples come from distributions with the same mean (i.e., the means are not different).
 
@@ -3668,7 +3671,7 @@ wilcox.test(long$scores ~ long$ID, alternative = "greater")
 
 Reject null —\> Player 1 is better than Player 2
 
-## t-test,  Wilcox paired
+## t-test, Wilcox paired
 
 **DATA HAS TO BE IN WIDE FORMAT**
 
@@ -3707,7 +3710,7 @@ Was there improvement over the course of the semester. H0: Test 2 - Test 1 \> 0
 t.test(HW_6$Test.2, HW_6$Test.1, paired = TRUE, alternative = "greater")
 ```
 
-## Wilcoxon test 
+## Wilcoxon test
 
 ```{r}
 library(coin)
