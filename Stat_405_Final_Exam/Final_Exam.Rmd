@@ -4,6 +4,10 @@ output: html_document
 date: "2024-12-03"
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
 # MODULE 2
 
 ## data inputting
@@ -1405,7 +1409,7 @@ would very unlikely be a coicidence.
 
 the QQ plot this paired t-test produces verifyies the normalcy of the data sets.;
 
-```{r}
+```{r,eval=FALSE}
 proc import datafile="/home/u63989204/Midterm 1/Module 6/Module_6_Homework/Homework 6 data.xlsx"
 dbms=xlsx 
 out = hw_six replace;
@@ -1416,7 +1420,7 @@ run;
 
 a\. First, we want to see if there was a difference in the two tests.;
 
-```{r}
+```{r,eval=FALSE}
 PROC TTEST DATA=hw_six;
 title "Jacob Richards - two sided t-test";
 PAIRED Test_2*Test_1; #first group - second group
@@ -1429,7 +1433,7 @@ RUN;
 
 Reject the null hypothesis that the difference of means of tests is equal to zero.
 
-```{r}
+```{r,eval=FALSE}
 PROC TTEST DATA=hw_six side=U;
 title "Jacob Richards - Upper sides t-test";
 PAIRED test_2*test_1; #first group - second group 
@@ -1448,7 +1452,7 @@ reject null differences are equal —\> conclude test 2 was better
 
 this came from the two sided function call
 
-```{r}
+```{r,eval=FALSE}
 Mean	      95% CL Mean	  Std Dev	95% CL Std Dev
 9.8000	0.6167	18.9833	7.3959	4.4312	21.2527
 ```
@@ -2054,7 +2058,7 @@ cumprod(x)
 
 ```
 
-```{r}
+```{r,eval=FALSE}
 
 
 ####### Some basic math functions: ########
@@ -2125,7 +2129,7 @@ sign
 
 ```
 
-```{r}
+```{r,eval=FALSE}
 ######## creating sequences and vectors #######
 
 x<-1:10  # creates regular sequence between 1 and 10
@@ -2350,7 +2354,7 @@ flowers <- read.table(file = '/Users/jacobrichards/Desktop/Personal_save/Stat_40
 
 ## options for read.table
 
-```{r}
+```{r,eval=FALSE}
 dec = "," #if you're in europe 
 na.strings = "*" #if they represent an empty element by somehing other than NA
 sep = "\t" #tab delimeted 
@@ -3092,10 +3096,9 @@ iris %>%
 
 ```
 
-```{r,eval=false eval=FALSE, include=FALSE, r,eval=false}
+```{r,eval=FALSE}
 
-library(candisc)
-
+data(HSB)
 # convert data frame to tibble 
 HSB <- as_tibble(HSB)
 HSB
