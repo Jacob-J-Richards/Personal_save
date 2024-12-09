@@ -2564,6 +2564,7 @@ pairs(flowers[, c("height", "weight", "leafarea",
 ## coplots
 
 ```{r}
+flowers <- read.table(file = '/Users/jacobrichards/Desktop/Personal_save/Stat_405_Final_Exam/flower.txt', header = TRUE, sep = "\t", stringsAsFactors = TRUE) #only needs file name
 #flowers as a function of weight, examined at different intervals of leaf area (stratify by quantatative)
 coplot(flowers ~ weight|leafarea, data = flowers)
 #panels from bottom left to top right correspond to bars of equivalent potion in the leaf area interval box 
