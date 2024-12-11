@@ -63,14 +63,19 @@ correct
 
 ```{r}
 
-check_prime <- function(x) {
-  # if x is divisible by any number from 1 to itself minus 1 then it's not prime
-  if ( x %% seq(1,x-1) == 0 ) {return(false)} #this is a vector of booleans
-  else { return(TRUE) }
-}
+i = 600851475143
 
+x = 600851475143
 
+primes <- numeric(0)
+ 
+  while (i <= x) {
+    
+   if ( all(i %% seq(2,i-1) != 0)) { primes <- c(primes,i) }
+        
+    x = x - 1 
+  }
 
-(check_prime(28287))
+# ohh i get it now you don't check for primes from 1 up to the number, you find the first prime going from the number down to 1 
 
 ```
